@@ -1,0 +1,18 @@
+# Validator config downloaded at runtime — not part of this repo
+docker-compose-validator.yml
+docker-compose-rpc.yml
+
+# Secrets
+.env.healthcheck
+
+# Logs
+logs/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# OS
+.DS_Store
+Thumbs.db

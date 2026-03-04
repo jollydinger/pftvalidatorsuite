@@ -1,0 +1,62 @@
+# PFT Validator Health-Check Sidecar
+# ─────────────────────────────────────────────────────────────────────────────
+# Usage (run alongside the downloaded validator compose file):
+#
+#   docker compose \
+#     -f docker-compose-validator.yml \
+#     -f docker-compose.sidecar.yml \
+#     --env-file .env.healthcheck \
+#     up -d
+#
+# The two files share the same default network so the sidecar can reach
+# the postfiatd container by its service name.
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+  pft-healthcheck:
+    build:
+      context: ./healthcheck
+      dockerfile: Dockerfile
+    container_name: pft-healthcheck
+    restart: unless-stopped
+
+    environment:
+      # ── Node connection ────────────────────────────────────────────────────
+      # Port 6005 = public HTTP JSON-RPC (works for server_info).
+      # Switch to 5005 if your node exposes the admin port and you need the
+      # full peers list (admin-only in some postfiatd builds).
+      NODE_RPC_URL: "http://postfiatd:6005"
+      POLL_INTERVAL_SECONDS: "15"
+
+      # ── Alerting ───────────────────────────────────────────────────────────
+      # Set HEALTHCHECK_WEBHOOK_URL in .env.healthcheck to activate alerts.
+      WEBHOOK_URL: "${HEALTHCHECK_WEBHOOK_URL:-}"
+      # discord | slack | generic
+      WEBHOOK_TYPE: "${HEALTHCHECK_WEBHOOK_TYPE:-discord}"
+      # Seconds before the same alert fires again (default: 5 min)
+      ALERT_COOLDOWN_SECONDS: "300"
+
+      # ── Ledger close thresholds ────────────────────────────────────────────
+      LEDGER_AGE_WARN_SECONDS: "15"
+      LEDGER_AGE_ERROR_SECONDS: "60"
+      LEDGER_INTERVAL_WARN_SECONDS: "8"
+      LEDGER_INTERVAL_ERROR_SECONDS: "20"
+
+      # ── Peer thresholds ────────────────────────────────────────────────────
+      PEER_LATENCY_WARN_MS: "300"
+      MIN_PEER_COUNT: "3"
+
+    volumes:
+      # Logs land alongside the validator logs so Promtail picks them up.
+      - ./logs/healthcheck:/var/log/healthcheck
+
+    depends_on:
+      - postfiatd
+
+    # The healthcheck itself is intentionally lightweight — no external
+    # port exposure needed; all communication is intra-network.
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "5"
