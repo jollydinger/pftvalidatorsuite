@@ -2,7 +2,7 @@
 
 Automated health-check sidecar for [Post Fiat Ledger](https://github.com/postfiatorg/pftl-validator) validators.
 
-Runs as a Docker service alongside `postfiatd`, continuously monitors the node, and fires structured alerts when something goes wrong — before your agreement scores start dropping.
+Runs as a Docker container alongside `postfiatd`, continuously monitors the node, and fires structured alerts when something goes wrong — before your agreement scores start dropping.
 
 ---
 
@@ -12,21 +12,21 @@ Runs as a Docker service alongside `postfiatd`, continuously monitors the node, 
 |---|---|---|---|
 | **Sync / consensus state** | `server_info.server_state` must be `proposing` or `validating` | `tracking` / `syncing` | `disconnected` / `connected` |
 | **Ledger age** | Seconds since the last validated ledger closed | ≥ 15 s | ≥ 60 s |
-| **Ledger close interval** | Wall-clock diff between the last 20 observed ledger sequences | ≥ 8 s avg | ≥ 20 s avg |
+| **Ledger close interval** | Wall-clock delta ÷ sequence delta across the last 20 observed ledgers | ≥ 8 s avg | ≥ 20 s avg |
 | **Peer count** | Number of connected peers | — | < 3 |
-| **Peer latency** | Per-peer `latency` field parsed from the `peers` RPC | > 300 ms on ≥ 50 % of peers | — |
+| **Peer latency** | Per-peer latency in ms from the `peers` RPC | > 300 ms on ≥ 50 % of peers | — |
 | **Load factor** | `server_info.load_factor` (high-inference load signal) | > 100× | — |
 
-Every poll cycle also emits a single `health_summary` record with an `overall: OK / WARN / ERROR` field that's easy to grep, tail, or pipe into a dashboard.
+Every poll cycle emits a single `health_summary` record with `overall: OK / WARN / ERROR` — easy to grep or pipe into a dashboard.
 
 ---
 
 ## How alerts work
 
-- **Structured JSON logs** → written to `./logs/healthcheck/monitor.log`, inside the same `./logs` mount that Promtail already reads from the base validator stack.
-- **Discord or Slack webhook** → each alert type has an independent 5-minute cooldown so you won't get spammed during an outage.
+- **Structured JSON logs** → written to `./sidecar/logs/healthcheck/monitor.log`
+- **Discord or Slack webhook** → each alert type has an independent 5-minute cooldown to avoid spam
 
-All output to stdout is also newline-delimited JSON, so `docker logs -f pft-healthcheck | jq .` gives a live feed.
+All stdout output is newline-delimited JSON, so `docker logs -f pft-healthcheck | jq .` gives a live feed.
 
 ---
 
@@ -48,7 +48,7 @@ pftvalidatorsuite/
 │   ├── monitor.py              # async Python monitor (aiohttp)
 │   ├── Dockerfile              # python:3.12-alpine image
 │   └── requirements.txt
-├── docker-compose.sidecar.yml  # sidecar service definition
+├── docker-compose.sidecar.yml  # reference compose definition
 ├── .env.healthcheck.example    # copy → .env.healthcheck and fill in webhook URL
 └── README.md
 ```
@@ -57,95 +57,114 @@ pftvalidatorsuite/
 
 ## Setup
 
-### 1 — Clone this repo onto your validator host
+### 1 — SSH into your validator VPS
 
 ```bash
-git clone https://github.com/jollydinger/pftvalidatorsuite.git
-cd pftvalidatorsuite
+ssh postfiat@<your-vps-ip>
 ```
 
-### 2 — Download the validator compose file (if you haven't already)
-
-The base compose file lives in the `postfiatd` repo. Download it into the same directory:
+### 2 — Find where your validator compose file lives
 
 ```bash
-curl -O https://raw.githubusercontent.com/postfiatorg/postfiatd/main/scripts/docker-compose-validator.yml
+find ~/ -name "docker-compose-validator.yml" 2>/dev/null
 ```
 
-Your working directory should now look like:
-
+For a standard pftl-validator install this is typically:
 ```
-pftvalidatorsuite/
-├── docker-compose-validator.yml   ← downloaded
-├── docker-compose.sidecar.yml     ← from this repo
-├── healthcheck/
-└── ...
+/home/postfiat/repos/postfiatd/scripts/docker-compose-validator.yml
 ```
 
-### 3 — Configure your webhook (optional but recommended)
+### 3 — Clone this repo into that scripts directory
 
 ```bash
-cp .env.healthcheck.example .env.healthcheck
+cd /home/postfiat/repos/postfiatd/scripts
+git clone https://github.com/jollydinger/pftvalidatorsuite.git sidecar
 ```
 
-Open `.env.healthcheck` and set your webhook URL:
+### 4 — Copy the healthcheck build context
+
+Docker resolves the build path from the working directory, so copy it up one level:
+
+```bash
+cp -r sidecar/healthcheck ./
+```
+
+### 5 — Configure your webhook (optional but recommended)
+
+```bash
+cp sidecar/.env.healthcheck.example sidecar/.env.healthcheck
+nano sidecar/.env.healthcheck
+```
+
+Set your webhook URL:
 
 ```env
 HEALTHCHECK_WEBHOOK_URL=https://discord.com/api/webhooks/...
 HEALTHCHECK_WEBHOOK_TYPE=discord   # or: slack
 ```
 
-Leave `HEALTHCHECK_WEBHOOK_URL` empty to disable webhooks and use logs only.
+Leave `HEALTHCHECK_WEBHOOK_URL` empty to use logs only.
 
 **Getting a Discord webhook URL:**
-1. Open Discord → your server → *Server Settings* → *Integrations* → *Webhooks*
-2. Click *New Webhook*, pick a channel, click *Copy Webhook URL*
+1. Discord → your server → *Server Settings* → *Integrations* → *Webhooks*
+2. *New Webhook* → pick a channel → *Copy Webhook URL*
 
 **Getting a Slack webhook URL:**
-1. Go to *api.slack.com/apps* → *Create New App* → *From scratch*
-2. *Incoming Webhooks* → *Activate* → *Add New Webhook to Workspace*
-3. Copy the webhook URL
+1. *api.slack.com/apps* → *Create New App* → *Incoming Webhooks* → *Activate*
+2. *Add New Webhook to Workspace* → copy the URL
 
-### 4 — Start everything
+### 6 — Build and start the sidecar
 
 ```bash
-docker compose \
-  -f docker-compose-validator.yml \
-  -f docker-compose.sidecar.yml \
-  --env-file .env.healthcheck \
-  up -d
+docker build -t scripts-pft-healthcheck ./healthcheck
 ```
 
-The sidecar builds automatically on first run (< 30 seconds on a typical host).
+```bash
+docker run -d \
+  --name pft-healthcheck \
+  --network container:postfiatd \
+  -e NODE_RPC_URL=http://127.0.0.1:5005 \
+  -e WEBHOOK_URL="${HEALTHCHECK_WEBHOOK_URL:-}" \
+  -e WEBHOOK_TYPE="${HEALTHCHECK_WEBHOOK_TYPE:-discord}" \
+  -v /home/postfiat/repos/postfiatd/scripts/sidecar/logs/healthcheck:/var/log/healthcheck \
+  --restart unless-stopped \
+  scripts-pft-healthcheck
+```
 
-### 5 — Verify it's running
+The sidecar attaches to `postfiatd`'s network namespace using `--network container:postfiatd`, so it can reach the admin RPC on `127.0.0.1:5005` without exposing any ports externally.
+
+### 7 — Verify it's running
 
 ```bash
-# Live structured log stream
-docker logs -f pft-healthcheck
-
-# Pretty-print with jq
 docker logs -f pft-healthcheck | jq .
-
-# Quick status grep
-docker logs pft-healthcheck 2>&1 | grep health_summary | tail -5 | jq '{ts: .timestamp, overall: .overall, state: .state, ledger_seq: .ledger_seq}'
 ```
 
 A healthy node produces output like:
 
 ```json
 {
-  "timestamp": "2026-03-04T12:00:00.123456+00:00",
+  "timestamp": "2026-03-04T23:10:43.906705+00:00",
   "level": "INFO",
   "event": "health_summary",
   "overall": "OK",
   "state": "proposing",
-  "ledger_seq": 4821073,
-  "ledger_age_seconds": 3.1,
-  "avg_ledger_interval_seconds": 3.4,
-  "peer_count": 18,
-  "avg_peer_latency_ms": 42.7,
+  "ledger_seq": 757474,
+  "ledger_age_seconds": 2.0,
+  "avg_ledger_interval_seconds": 3.0,
+  "peer_count": 21,
+  "avg_peer_latency_ms": 107.7,
   "load_factor": 1
+}
+```
+
+And per-cycle peer detail:
+
+```json
+{
+  "event": "peers_ok",
+  "count": 21,
+  "latency_ms": { "min": 1.0, "max": 235.0, "avg": 107.7, "p95": 208.0 },
+  "high_latency_count": 0
 }
 ```
 
@@ -153,11 +172,11 @@ A healthy node produces output like:
 
 ## Configuration reference
 
-All configuration is done via environment variables. Defaults are already set in `docker-compose.sidecar.yml`; override them in `.env.healthcheck` or directly in the compose file.
+All configuration is passed as environment variables to `docker run`.
 
 | Variable | Default | Description |
 |---|---|---|
-| `NODE_RPC_URL` | `http://postfiatd:6005` | JSON-RPC endpoint. Use port `5005` if your build requires admin access for the `peers` command. |
+| `NODE_RPC_URL` | `http://127.0.0.1:5005` | Admin HTTP JSON-RPC endpoint. Port 5005 is required for the `peers` command. Reachable via the shared container network namespace. |
 | `POLL_INTERVAL_SECONDS` | `15` | Seconds between full check cycles. |
 | `WEBHOOK_URL` | *(empty)* | Discord or Slack incoming webhook URL. Empty = disabled. |
 | `WEBHOOK_TYPE` | `discord` | `discord` \| `slack` \| `generic` |
@@ -172,61 +191,42 @@ All configuration is done via environment variables. Defaults are already set in
 
 ---
 
-## Adjusting thresholds
+## Node port reference
 
-Normal PFT Ledger close time is ~3–4 seconds. The warn/error thresholds for ledger interval are deliberately conservative (8 s / 20 s) to avoid false positives during brief network variance. Tighten them if you want earlier warnings:
+The PFT validator config exposes these ports:
 
-```yaml
-# docker-compose.sidecar.yml
-environment:
-  LEDGER_INTERVAL_WARN_SECONDS: "5"
-  LEDGER_INTERVAL_ERROR_SECONDS: "10"
-```
+| Port | Protocol | Purpose |
+|---|---|---|
+| 5005 | HTTP | Admin JSON-RPC — used by this sidecar |
+| 2559 | Peer | P2P peer connections |
+| 6005 | WSS | Public WebSocket (not HTTP — do not use for RPC) |
+| 6006 | WS | Admin WebSocket |
+| 50051 | gRPC | gRPC gateway |
 
----
-
-## Viewing logs in Grafana / Loki
-
-The base validator stack ships Promtail, which already tails `./logs`. The sidecar writes to `./logs/healthcheck/monitor.log` inside the same mount, so Promtail will automatically forward those records to Loki if you add a scrape config:
-
-```yaml
-# promtail-config.yml — add alongside your existing scrape_configs
-scrape_configs:
-  - job_name: pft-healthcheck
-    static_configs:
-      - targets: [localhost]
-        labels:
-          job: pft-healthcheck
-          __path__: /var/log/postfiatd/healthcheck/monitor.log
-```
-
-Every log line is newline-delimited JSON, so Loki's `json` pipeline stage can extract fields directly for Grafana alerting.
+Port 5005 is only accessible from `127.0.0.1` inside the container. Using `--network container:postfiatd` gives the sidecar access without exposing anything externally.
 
 ---
 
 ## Useful commands
 
 ```bash
-# Restart only the sidecar (e.g. after changing config)
-docker compose \
-  -f docker-compose-validator.yml \
-  -f docker-compose.sidecar.yml \
-  restart pft-healthcheck
+# Live log stream
+docker logs -f pft-healthcheck | jq .
+
+# Quick status check
+docker logs pft-healthcheck 2>&1 | grep health_summary | tail -3 | jq '{ts: .timestamp, overall: .overall, state: .state, seq: .ledger_seq, interval: .avg_ledger_interval_seconds, peers: .peer_count, latency: .avg_peer_latency_ms}'
+
+# Restart the sidecar (e.g. after a config change)
+docker restart pft-healthcheck
+
+# Rebuild and redeploy after updating monitor.py
+cp sidecar/healthcheck/monitor.py healthcheck/monitor.py
+docker build -t scripts-pft-healthcheck ./healthcheck
+docker stop pft-healthcheck && docker rm pft-healthcheck
+# then re-run the docker run command from step 6
 
 # Stop the sidecar without touching the validator
-docker compose \
-  -f docker-compose-validator.yml \
-  -f docker-compose.sidecar.yml \
-  stop pft-healthcheck
-
-# Rebuild after editing monitor.py
-docker compose \
-  -f docker-compose-validator.yml \
-  -f docker-compose.sidecar.yml \
-  up -d --build pft-healthcheck
-
-# One-shot manual health check (no Docker required — needs Python 3.12+ and aiohttp)
-NODE_RPC_URL=http://localhost:6005 python healthcheck/monitor.py
+docker stop pft-healthcheck
 ```
 
 ---
@@ -234,26 +234,35 @@ NODE_RPC_URL=http://localhost:6005 python healthcheck/monitor.py
 ## Troubleshooting
 
 **`peers_endpoint_unavailable` in logs**
-The `peers` RPC is admin-only in some postfiatd builds. Set `NODE_RPC_URL=http://postfiatd:5005` — port 5005 is reachable inside the Docker network even though it isn't exposed to the host.
+Make sure `NODE_RPC_URL` points to port 5005. Port 6005 is WebSocket-only and will reject HTTP requests.
 
-**`node_unreachable` immediately on startup**
-The sidecar starts before postfiatd finishes initialising. This is normal for the first 1–2 minutes; `depends_on` ensures ordering but not readiness. The monitor will keep retrying and auto-recover.
+**`node_unreachable` on startup**
+Normal for the first 1–2 minutes while postfiatd initialises. The sidecar retries automatically every poll cycle.
+
+**Latency shows `null`**
+You're running an old image. Rebuild:
+```bash
+cp sidecar/healthcheck/monitor.py healthcheck/monitor.py
+docker build -t scripts-pft-healthcheck ./healthcheck
+docker stop pft-healthcheck && docker rm pft-healthcheck
+```
+Then re-run the `docker run` command from step 6.
 
 **Webhook alerts not arriving**
-1. Check `docker logs pft-healthcheck` for `webhook_delivery_failed` or `webhook_error` records.
-2. Verify the URL is correct and the bot/app has permission to post to that channel.
-3. Confirm `HEALTHCHECK_WEBHOOK_URL` is set in your `.env.healthcheck` file and that you passed `--env-file .env.healthcheck` to `docker compose`.
+1. Check `docker logs pft-healthcheck` for `webhook_delivery_failed` or `webhook_error`.
+2. Verify the URL is correct and the bot has permission to post to the channel.
+3. Confirm `WEBHOOK_URL` is passed to `docker run` via `-e`.
 
-**Log file not appearing on the host**
-Make sure `./logs/healthcheck/` directory exists (Docker will create it, but some hosts have permission issues). You can create it manually: `mkdir -p logs/healthcheck`.
+**`elevated_ledger_interval` WARN firing incorrectly**
+Make sure you're running the latest image — an earlier version measured wall-clock time between polls rather than dividing by the ledger sequence delta, causing false positives at the default 15s poll interval.
 
 ---
 
 ## Security notes
 
-- The sidecar only makes **outbound** HTTP requests to the local postfiatd RPC and your webhook URL. It opens no listening ports.
+- The sidecar makes only **outbound** HTTP requests to the local RPC and your webhook URL. It opens no listening ports.
+- Port 5005 is not exposed to the host — it's only accessible within the shared container network namespace.
 - Never commit `.env.healthcheck` — it contains your webhook secret. It is listed in `.gitignore`.
-- The monitor runs as a non-root Python process inside a minimal Alpine image.
 
 ---
 
