@@ -253,11 +253,14 @@ async def collect_server_info(session: aiohttp.ClientSession) -> dict[str, Any]:
     if ledger_seq and (not ledger_history or ledger_history[-1]["seq"] != ledger_seq):
         ledger_history.append({"seq": ledger_seq, "ts": time.monotonic()})
 
-    # Calculate wall-clock interval between consecutive observed ledger closes.
+    # Calculate per-ledger close interval from observed history.
+    # Divide wall-clock delta by sequence delta to handle polls that skip
+    # multiple ledgers (e.g. poll every 15s while ledgers close every 3s).
     avg_interval: Optional[float] = None
     if len(ledger_history) >= 2:
         intervals = [
-            ledger_history[i]["ts"] - ledger_history[i - 1]["ts"]
+            (ledger_history[i]["ts"] - ledger_history[i - 1]["ts"])
+            / max(1, ledger_history[i]["seq"] - ledger_history[i - 1]["seq"])
             for i in range(1, len(ledger_history))
         ]
         avg_interval = sum(intervals) / len(intervals)
