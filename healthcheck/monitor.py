@@ -282,7 +282,9 @@ async def collect_server_info(session: aiohttp.ClientSession) -> dict[str, Any]:
 
 
 def _parse_latency_ms(raw: Any) -> Optional[float]:
-    """Convert XRPL latency strings ('15ms', '1.5ms') to float milliseconds."""
+    """Parse peer latency — handles both plain integers (216) and strings ('15ms')."""
+    if isinstance(raw, (int, float)):
+        return float(raw)
     m = re.match(r"([\d.]+)\s*ms", str(raw), re.IGNORECASE)
     return float(m.group(1)) if m else None
 
