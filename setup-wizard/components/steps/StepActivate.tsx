@@ -127,6 +127,14 @@ curl -s -X POST http://localhost:5005 \\
             <h3 className="text-sm font-semibold text-gray-200">Restart your validator</h3>
           </div>
           <CodeBlock code={restartCmd} label={`${config.sshUser}@${config.serverIp}`} />
+          <div className="mt-3 rounded-lg border border-amber-500/20 bg-amber-500/5 p-3">
+            <p className="text-xs text-amber-300/80 leading-relaxed">
+              <strong className="text-amber-300">Important:</strong> Any time you restart <code className="font-mono bg-amber-500/10 px-1 rounded">postfiatd</code>, you must also restart the health-check sidecar — it loses its network connection when the main container restarts. Run this after any future restart:
+            </p>
+            <div className="mt-2 font-mono text-xs text-gray-400 bg-[#08090f] rounded p-2 border border-[#1e1f35]">
+              docker stop pft-healthcheck && docker rm pft-healthcheck && docker run -d --name pft-healthcheck --network container:postfiatd -e NODE_RPC_URL=http://127.0.0.1:5005 -v ~/validator/sidecar/logs/healthcheck:/var/log/healthcheck --restart unless-stopped pft-healthcheck
+            </div>
+          </div>
         </div>
 
         {/* Step 5: Verify */}

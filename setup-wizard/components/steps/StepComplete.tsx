@@ -17,9 +17,18 @@ docker logs -f postfiatd 2>&1 | tail -50`
   const statusCmd = `# Quick status check — server state + peer count
 docker logs pft-healthcheck 2>&1 | grep health_summary | tail -1`
 
-  const restartCmd = `# Restart both services
-docker compose -f ~/validator/docker-compose-validator.yml --env-file ~/validator/.env restart
-docker restart pft-healthcheck`
+  const restartCmd = `# Restart the validator node
+docker restart postfiatd
+
+# Always restart the sidecar after restarting postfiatd — it loses its
+# network connection when the main container restarts
+docker stop pft-healthcheck && docker rm pft-healthcheck && docker run -d \\
+  --name pft-healthcheck \\
+  --network container:postfiatd \\
+  -e NODE_RPC_URL=http://127.0.0.1:5005 \\
+  -v ~/validator/sidecar/logs/healthcheck:/var/log/healthcheck \\
+  --restart unless-stopped \\
+  pft-healthcheck`
 
   const scoreUrl = config.validatorPubKey
     ? `https://postfiat-onboarding-api.fly.dev/validators/${config.validatorPubKey}`
