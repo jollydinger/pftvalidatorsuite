@@ -9,6 +9,10 @@ export function StepKeys({ config, setConfig, onNext, onBack }: StepProps) {
   const [backedUp, setBackedUp] = useState(false)
   const [tokenSaved, setTokenSaved] = useState(false)
 
+  const generateKeyCmd = `# Create the config directory and generate your validator keys
+docker exec postfiatd mkdir -p /root/.ripple
+docker exec postfiatd validator-keys create_keys --keyfile /root/.ripple/validator-keys.json`
+
   const viewKeyCmd = `# View your validator's key file
 docker exec postfiatd cat /root/.ripple/validator-keys.json`
 
@@ -22,9 +26,7 @@ cat ~/validator-keys-backup.json
 rm ~/validator-keys-backup.json`
 
   const tokenCmd = `# Generate your validator token
-docker exec postfiatd /opt/ripple/bin/validator-keys \\
-  create_token \\
-  --keyfile /root/.ripple/validator-keys.json`
+docker exec postfiatd validator-keys create_token --keyfile /root/.ripple/validator-keys.json`
 
   const scoreCmd = config.validatorPubKey
     ? `# Check your validator's agreement score
@@ -53,17 +55,29 @@ curl -s https://postfiat-onboarding-api.fly.dev/validators/<YOUR_PUBLIC_KEY>`
       <div className="mb-8">
         <h2 className="text-2xl font-bold text-gray-100 mb-2">Key Generation & Backup</h2>
         <p className="text-gray-400">
-          Your validator key was generated automatically when the node started. It is your
-          permanent identity on the Post Fiat network — treat it like a private key for a
-          crypto wallet.
+          Your validator key is your permanent identity on the Post Fiat network — treat it
+          like a private key for a crypto wallet. We&apos;ll generate it now, then back it up
+          before moving on.
         </p>
       </div>
 
       <div className="space-y-6">
-        {/* Step 1: View key file */}
+        {/* Step 1: Generate keys */}
         <div>
           <div className="flex items-center gap-2 mb-3">
             <span className="w-5 h-5 rounded-full bg-accent/20 text-accent text-xs flex items-center justify-center font-semibold shrink-0">1</span>
+            <h3 className="text-sm font-semibold text-gray-200">Generate your validator keys</h3>
+          </div>
+          <CodeBlock code={generateKeyCmd} label={`${config.sshUser}@${config.serverIp}`} multiline />
+          <p className="text-xs text-gray-500 mt-2">
+            This creates a new ed25519 keypair and writes it to the validator config volume. Only run this once — running it again will overwrite your existing keys.
+          </p>
+        </div>
+
+        {/* Step 2: View key file */}
+        <div>
+          <div className="flex items-center gap-2 mb-3">
+            <span className="w-5 h-5 rounded-full bg-accent/20 text-accent text-xs flex items-center justify-center font-semibold shrink-0">2</span>
             <h3 className="text-sm font-semibold text-gray-200">View your validator key file</h3>
           </div>
           <CodeBlock code={viewKeyCmd} label={`${config.sshUser}@${config.serverIp}`} multiline />
@@ -156,7 +170,7 @@ curl -s https://postfiat-onboarding-api.fly.dev/validators/<YOUR_PUBLIC_KEY>`
         {/* Step 3: Generate validator token */}
         <div>
           <div className="flex items-center gap-2 mb-3">
-            <span className="w-5 h-5 rounded-full bg-accent/20 text-accent text-xs flex items-center justify-center font-semibold shrink-0">3</span>
+            <span className="w-5 h-5 rounded-full bg-accent/20 text-accent text-xs flex items-center justify-center font-semibold shrink-0">4</span>
             <h3 className="text-sm font-semibold text-gray-200">Generate your validator token</h3>
           </div>
           <CodeBlock code={tokenCmd} label={`${config.sshUser}@${config.serverIp}`} multiline />
@@ -190,10 +204,10 @@ curl -s https://postfiat-onboarding-api.fly.dev/validators/<YOUR_PUBLIC_KEY>`
           </div>
         </div>
 
-        {/* Step 4: Enter public key */}
+        {/* Step 5: Enter public key */}
         <div>
           <div className="flex items-center gap-2 mb-3">
-            <span className="w-5 h-5 rounded-full bg-accent/20 text-accent text-xs flex items-center justify-center font-semibold shrink-0">4</span>
+            <span className="w-5 h-5 rounded-full bg-accent/20 text-accent text-xs flex items-center justify-center font-semibold shrink-0">5</span>
             <h3 className="text-sm font-semibold text-gray-200">Enter your validator public key</h3>
           </div>
 
