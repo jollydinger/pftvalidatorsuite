@@ -32,9 +32,9 @@ docker compose -f docker-compose-validator.yml --env-file .env pull
 docker images | grep postfiatd`
 
   const startCmd = `# Start the validator node
-docker compose -f docker-compose-validator.yml --env-file .env up -d
+docker compose -f docker-compose-validator.yml --env-file .env up -d`
 
-# Watch startup logs (Ctrl+C to stop watching)
+  const logsCmd = `# Watch startup logs
 docker logs -f postfiatd 2>&1`
 
   const checkCmd = `# Confirm the container is running
@@ -116,15 +116,47 @@ curl -s -X POST http://localhost:6005 \\
             <h3 className="text-sm font-semibold text-gray-200">Start your node</h3>
           </div>
           <CodeBlock code={startCmd} label={`${config.sshUser}@${config.serverIp} ~/validator`} multiline />
-          <p className="text-xs text-gray-500 mt-2">
-            The node will take 30–60 seconds to initialize and begin syncing. Press Ctrl+C to stop following logs.
-          </p>
         </div>
 
         {/* Step 6 */}
         <div>
           <div className="flex items-center gap-2 mb-3">
             <span className="w-5 h-5 rounded-full bg-accent/20 text-accent text-xs flex items-center justify-center font-semibold shrink-0">6</span>
+            <h3 className="text-sm font-semibold text-gray-200">Watch startup logs</h3>
+          </div>
+          <CodeBlock code={logsCmd} label={`${config.sshUser}@${config.serverIp} ~/validator`} multiline />
+          <p className="text-xs text-gray-500 mt-2">
+            Wait until you see <code className="font-mono text-xs bg-[#08090f] px-1 rounded border border-[#1e1f35]">STATE-&gt;connected</code> or amendment/manifest lines in the output. This takes 30–60 seconds.
+          </p>
+        </div>
+
+        {/* Step 7 — Ctrl+C gate */}
+        <div className="rounded-xl border-2 border-accent/30 bg-accent/5 p-5">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-8 h-8 rounded-lg bg-accent/20 flex items-center justify-center shrink-0">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-accent-bright">
+                <rect x="2" y="7" width="20" height="14" rx="2" />
+                <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" />
+                <line x1="12" y1="12" x2="12" y2="16" />
+                <line x1="10" y1="14" x2="14" y2="14" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-sm font-bold text-accent-bright">Press Ctrl+C now to stop following logs</p>
+              <p className="text-xs text-gray-400 mt-0.5">You must exit the log stream before running any further commands.</p>
+            </div>
+          </div>
+          <div className="mt-3 flex items-center justify-center gap-4 py-3 rounded-lg bg-[#08090f] border border-accent/20">
+            <kbd className="px-3 py-1.5 rounded-md bg-[#1a1b2e] border border-[#2a2c45] text-sm font-mono font-semibold text-gray-200 shadow-sm">Ctrl</kbd>
+            <span className="text-gray-500 font-medium">+</span>
+            <kbd className="px-3 py-1.5 rounded-md bg-[#1a1b2e] border border-[#2a2c45] text-sm font-mono font-semibold text-gray-200 shadow-sm">C</kbd>
+          </div>
+        </div>
+
+        {/* Step 8 */}
+        <div>
+          <div className="flex items-center gap-2 mb-3">
+            <span className="w-5 h-5 rounded-full bg-accent/20 text-accent text-xs flex items-center justify-center font-semibold shrink-0">8</span>
             <h3 className="text-sm font-semibold text-gray-200">Verify it&apos;s running</h3>
           </div>
           <CodeBlock code={checkCmd} label={`${config.sshUser}@${config.serverIp} ~/validator`} multiline />
