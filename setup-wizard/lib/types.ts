@@ -44,6 +44,7 @@ export const STEPS: Step[] = [
   { id: 'docker', title: 'Install Docker', shortTitle: 'Docker' },
   { id: 'node', title: 'Validator Node Setup', shortTitle: 'Node' },
   { id: 'keys', title: 'Key Generation', shortTitle: 'Keys' },
+  { id: 'activate', title: 'Activate Validator', shortTitle: 'Activate' },
   { id: 'domain', title: 'Domain Verification', shortTitle: 'Domain', optional: true },
   { id: 'sidecar', title: 'Health Monitoring', shortTitle: 'Monitor' },
   { id: 'complete', title: "You're Live!", shortTitle: 'Done' },

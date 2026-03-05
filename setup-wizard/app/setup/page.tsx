@@ -9,6 +9,7 @@ import { StepServer } from '@/components/steps/StepServer'
 import { StepDocker } from '@/components/steps/StepDocker'
 import { StepValidatorNode } from '@/components/steps/StepValidatorNode'
 import { StepKeys } from '@/components/steps/StepKeys'
+import { StepActivate } from '@/components/steps/StepActivate'
 import { StepDomain } from '@/components/steps/StepDomain'
 import { StepSidecar } from '@/components/steps/StepSidecar'
 import { StepComplete } from '@/components/steps/StepComplete'
@@ -60,9 +61,10 @@ export default function SetupPage() {
       case 2: return <StepDocker {...stepProps} />
       case 3: return <StepValidatorNode {...stepProps} />
       case 4: return <StepKeys {...stepProps} />
-      case 5: return <StepDomain {...stepProps} />
-      case 6: return <StepSidecar {...stepProps} />
-      case 7: return <StepComplete config={config} />
+      case 5: return <StepActivate {...stepProps} />
+      case 6: return <StepDomain {...stepProps} />
+      case 7: return <StepSidecar {...stepProps} />
+      case 8: return <StepComplete config={config} />
       default: return null
     }
   }
