@@ -60,9 +60,9 @@ curl -s -X POST http://localhost:6005 \\
 
       {/* Network badge */}
       <div className="flex items-center gap-2 mb-6 p-3 rounded-lg bg-[#0e0f1a] border border-[#1e1f35]">
-        <div className={`w-2 h-2 rounded-full animate-pulse-slow ${config.network === 'mainnet' ? 'bg-green-400' : 'bg-yellow-400'}`} />
+        <div className={`w-2 h-2 rounded-full animate-pulse-slow ${config.network === 'testnet' ? 'bg-green-400' : 'bg-yellow-400'}`} />
         <span className="text-sm text-gray-300">
-          Configuring for <span className="font-semibold text-gray-100">{config.network === 'mainnet' ? 'Mainnet' : 'Devnet (testing)'}</span>
+          Configuring for <span className="font-semibold text-gray-100">{config.network === 'testnet' ? 'Testnet' : 'Devnet'}</span>
         </span>
       </div>
 

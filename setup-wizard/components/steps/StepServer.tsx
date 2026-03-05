@@ -173,7 +173,7 @@ export function StepServer({ config, setConfig, onNext, onBack }: StepProps) {
         <div className="mt-5">
           <label className="block text-xs font-medium text-gray-400 mb-2">Network</label>
           <div className="flex gap-3">
-            {(['mainnet', 'devnet'] as const).map((net) => (
+            {(['testnet', 'devnet'] as const).map((net) => (
               <button
                 key={net}
                 onClick={() => setConfig({ network: net })}
@@ -184,16 +184,16 @@ export function StepServer({ config, setConfig, onNext, onBack }: StepProps) {
                 }`}
               >
                 <div className="flex items-center gap-2">
-                  <div className={`w-1.5 h-1.5 rounded-full ${net === 'mainnet' ? 'bg-green-400' : 'bg-yellow-400'}`} />
-                  {net === 'mainnet' ? 'Mainnet' : 'Devnet (testing)'}
+                  <div className={`w-1.5 h-1.5 rounded-full ${net === 'testnet' ? 'bg-green-400' : 'bg-yellow-400'}`} />
+                  {net === 'testnet' ? 'Testnet' : 'Devnet'}
                 </div>
               </button>
             ))}
           </div>
           <p className="text-xs text-gray-600 mt-2">
-            {config.network === 'mainnet'
-              ? 'Live network — your validator will participate in real consensus.'
-              : 'Test network — safe for experimentation and learning.'}
+            {config.network === 'testnet'
+              ? 'Main network — your validator will participate in real consensus.'
+              : 'Development network — safe for experimentation and learning.'}
           </p>
         </div>
       </div>

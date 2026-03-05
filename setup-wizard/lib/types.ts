@@ -1,7 +1,7 @@
 export interface WizardConfig {
   serverIp: string
   sshUser: string
-  network: 'mainnet' | 'devnet'
+  network: 'testnet' | 'devnet'
   validatorPubKey: string
   hasDomain: boolean
   domain: string
@@ -13,7 +13,7 @@ export interface WizardConfig {
 export const defaultConfig: WizardConfig = {
   serverIp: '',
   sshUser: 'root',
-  network: 'mainnet',
+  network: 'testnet',
   validatorPubKey: '',
   hasDomain: false,
   domain: '',

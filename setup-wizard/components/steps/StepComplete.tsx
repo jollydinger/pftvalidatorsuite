@@ -57,8 +57,8 @@ docker restart pft-healthcheck`
             },
             {
               label: 'Network',
-              value: config.network === 'mainnet' ? 'Mainnet' : 'Devnet (testing)',
-              badge: config.network === 'mainnet' ? 'live' : 'test',
+              value: config.network === 'testnet' ? 'Testnet' : 'Devnet',
+              badge: config.network === 'testnet' ? 'live' : 'test',
             },
             {
               label: 'Validator Key',
