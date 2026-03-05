@@ -164,7 +164,7 @@ docker exec postfiatd validator-keys create_token --keyfile /root/.ripple/valida
         {/* Step 3: Generate validator token */}
         <div>
           <div className="flex items-center gap-2 mb-3">
-            <span className="w-5 h-5 rounded-full bg-accent/20 text-accent text-xs flex items-center justify-center font-semibold shrink-0">4</span>
+            <span className="w-5 h-5 rounded-full bg-accent/20 text-accent text-xs flex items-center justify-center font-semibold shrink-0">3</span>
             <h3 className="text-sm font-semibold text-gray-200">Generate your validator token</h3>
           </div>
           <CodeBlock code={tokenCmd} label={`${config.sshUser}@${config.serverIp}`} multiline />
@@ -198,10 +198,10 @@ docker exec postfiatd validator-keys create_token --keyfile /root/.ripple/valida
           </div>
         </div>
 
-        {/* Step 5: Enter public key */}
+        {/* Step 4: Enter public key */}
         <div>
           <div className="flex items-center gap-2 mb-3">
-            <span className="w-5 h-5 rounded-full bg-accent/20 text-accent text-xs flex items-center justify-center font-semibold shrink-0">5</span>
+            <span className="w-5 h-5 rounded-full bg-accent/20 text-accent text-xs flex items-center justify-center font-semibold shrink-0">4</span>
             <h3 className="text-sm font-semibold text-gray-200">Enter your validator public key</h3>
           </div>
 

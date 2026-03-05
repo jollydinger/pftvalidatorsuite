@@ -58,9 +58,23 @@ docker compose version`
             <span className="w-5 h-5 rounded-full bg-accent/20 text-accent text-xs flex items-center justify-center font-semibold shrink-0">1</span>
             <h3 className="text-sm font-semibold text-gray-200">Connect to your server</h3>
           </div>
-          <CodeBlock code={sshCmd} label="from your local machine" />
+          <div className="mb-3 rounded-lg border border-[#1e1f35] bg-[#08090f] p-3 space-y-1.5">
+            <p className="text-xs text-gray-400 font-medium">Open a terminal on your local machine:</p>
+            <div className="flex items-center gap-2 text-xs text-gray-500">
+              <span className="text-gray-600">Mac / Linux</span>
+              <span className="text-gray-700">—</span>
+              <span>Open <strong className="text-gray-400">Terminal</strong></span>
+            </div>
+            <div className="flex items-center gap-2 text-xs text-gray-500">
+              <span className="text-gray-600">Windows</span>
+              <span className="text-gray-700">—</span>
+              <span>Open <strong className="text-gray-400">PowerShell</strong> or <strong className="text-gray-400">Windows Terminal</strong></span>
+            </div>
+          </div>
+          <CodeBlock code={sshCmd} label="your local terminal" />
           <p className="text-xs text-gray-500 mt-2">
-            Run this from your local terminal (not inside the server).
+            Your VPS provider will have emailed you a root password or let you add an SSH key during setup — use that to authenticate.
+            If prompted <code className="font-mono bg-[#08090f] px-1 rounded border border-[#1e1f35]">Are you sure you want to continue connecting?</code> type <code className="font-mono bg-[#08090f] px-1 rounded border border-[#1e1f35]">yes</code> and press Enter.
           </p>
         </div>
 

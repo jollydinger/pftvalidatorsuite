@@ -14,11 +14,9 @@ docker exec postfiatd validator-keys create_token --keyfile /root/.ripple/valida
 docker exec postfiatd grep -c "validator_token" /etc/postfiatd/postfiatd.cfg
 # Returns 0 = not yet configured, 1 = already configured`
 
-  const addTokenCmd = `# Open a shell inside the container
-docker exec -it postfiatd bash
+  const enterContainerCmd = `docker exec -it postfiatd bash`
 
-# Copy your token from step 1 — remove ALL line breaks so it is one continuous string.
-# Replace TOKEN_VALUE below with that single-line string.
+  const addTokenCmd = `# Replace TOKEN_VALUE with your token from step 1 (one continuous string, no line breaks)
 printf '\\n[validator_token]\\nTOKEN_VALUE\\n' >> /etc/postfiatd/postfiatd.cfg
 
 # Verify it was written correctly
@@ -103,10 +101,21 @@ curl -s -X POST http://localhost:5005 \\
             <span className="w-5 h-5 rounded-full bg-accent/20 text-accent text-xs flex items-center justify-center font-semibold shrink-0">3</span>
             <h3 className="text-sm font-semibold text-gray-200">Add the token to your validator config</h3>
           </div>
-          <CodeBlock code={addTokenCmd} label={`${config.sshUser}@${config.serverIp}`} multiline />
+
+          <p className="text-xs text-gray-500 mb-2">First, open a shell inside the container:</p>
+          <CodeBlock code={enterContainerCmd} label={`${config.sshUser}@${config.serverIp}`} />
+
+          <div className="my-3 flex items-center gap-2 px-3 py-2 rounded-lg bg-accent/5 border border-accent/20">
+            <div className="w-2 h-2 rounded-full bg-accent animate-pulse-slow shrink-0" />
+            <p className="text-xs text-accent-bright font-medium">
+              Your prompt will change — you are now <strong>inside the container</strong>. Run the commands below here.
+            </p>
+          </div>
+
+          <CodeBlock code={addTokenCmd} label="inside postfiatd container" multiline />
           <div className="mt-3 rounded-lg border border-amber-500/20 bg-amber-500/5 p-3">
             <p className="text-xs text-amber-300/80 leading-relaxed">
-              <strong className="text-amber-300">Important:</strong> The token output from step 1 has line breaks — remove them all so it is one continuous string before pasting as <code className="font-mono bg-amber-500/10 px-1 rounded">TOKEN_VALUE</code>. Line breaks in the token will break the command.
+              <strong className="text-amber-300">Important:</strong> The token output from step 1 has line breaks — remove them all so it is one continuous string before pasting as <code className="font-mono bg-amber-500/10 px-1 rounded">TOKEN_VALUE</code>. Line breaks will break the command.
             </p>
           </div>
         </div>
@@ -136,10 +145,22 @@ curl -s -X POST http://localhost:5005 \\
             <CodeBlock code={rpcVerifyCmd} label="optional — check server state" multiline />
           </div>
           <p className="text-xs text-gray-500 mt-2">
-            The <code className="font-mono text-xs bg-[#08090f] px-1 rounded border border-[#1e1f35]">server_state</code> should
-            reach <code className="font-mono text-xs text-green-400 bg-[#08090f] px-1 rounded border border-[#1e1f35] ml-1">proposing</code> or
-            <code className="font-mono text-xs text-green-400 bg-[#08090f] px-1 rounded border border-[#1e1f35] ml-1">validating</code> once
-            the token is active and the node has re-synced (usually within 1–2 minutes).
+            All three of these states mean your validator is healthy and active:
+          </p>
+          <div className="mt-2 space-y-1.5">
+            {[
+              { state: 'full', desc: 'Synced and token loaded — actively participating' },
+              { state: 'proposing', desc: 'Voting in consensus rounds' },
+              { state: 'validating', desc: 'Signing and broadcasting validations' },
+            ].map((item) => (
+              <div key={item.state} className="flex items-center gap-3">
+                <code className="font-mono text-xs text-green-400 bg-[#08090f] px-1.5 py-0.5 rounded border border-[#1e1f35] shrink-0">{item.state}</code>
+                <span className="text-xs text-gray-500">{item.desc}</span>
+              </div>
+            ))}
+          </div>
+          <p className="text-xs text-gray-600 mt-2">
+            It typically takes 1–2 minutes after restart to reach one of these states. If it still shows <code className="font-mono text-xs bg-[#08090f] px-1 rounded border border-[#1e1f35]">connected</code> or <code className="font-mono text-xs bg-[#08090f] px-1 rounded border border-[#1e1f35]">syncing</code>, wait another minute and run the curl again.
           </p>
         </div>
 
@@ -161,7 +182,7 @@ curl -s -X POST http://localhost:5005 \\
               )}
             </div>
             <span className="text-sm text-gray-300">
-              My validator token is in the config, the node restarted, and I can see manifest/token lines in the logs
+              My validator token is in the config, the node restarted, I can see manifest lines in the logs, and server_state shows <code className="font-mono text-xs bg-[#13141f] px-1 py-0.5 rounded border border-[#1e1f35]">full</code>, <code className="font-mono text-xs bg-[#13141f] px-1 py-0.5 rounded border border-[#1e1f35]">proposing</code>, or <code className="font-mono text-xs bg-[#13141f] px-1 py-0.5 rounded border border-[#1e1f35]">validating</code>
             </span>
           </label>
         </div>

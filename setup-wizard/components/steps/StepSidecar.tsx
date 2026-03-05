@@ -33,6 +33,9 @@ cd ~/validator
 # Clone the PFT Validator Suite (includes healthcheck sidecar)
 git clone https://github.com/jollydinger/pftvalidatorsuite.git sidecar
 
+# Create the log directory the sidecar will write to
+mkdir -p ~/validator/sidecar/logs/healthcheck
+
 # Build the health-check Docker image
 docker build -t pft-healthcheck ./sidecar/healthcheck`
 

@@ -123,7 +123,7 @@ curl -s -X POST http://localhost:5005 \\
           </div>
           <CodeBlock code={logsCmd} label={`${config.sshUser}@${config.serverIp} ~/validator`} multiline />
           <p className="text-xs text-gray-500 mt-2">
-            Wait until you see <code className="font-mono text-xs bg-[#08090f] px-1 rounded border border-[#1e1f35]">STATE-&gt;connected</code> or amendment/manifest lines in the output. This takes 30–60 seconds.
+            Wait until you see <code className="font-mono text-xs bg-[#08090f] px-1 rounded border border-[#1e1f35]">STATE-&gt;connected</code> or peer connection lines in the output — this takes 30–60 seconds. The node will continue syncing in the background after you press Ctrl+C. Reaching <code className="font-mono text-xs bg-[#08090f] px-1 rounded border border-[#1e1f35]">full</code> state on first boot typically takes 5–10 minutes.
           </p>
         </div>
 
