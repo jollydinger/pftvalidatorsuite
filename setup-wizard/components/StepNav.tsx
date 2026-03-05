@@ -72,12 +72,12 @@ export function StepNav({ currentStep, completedSteps, onStepClick }: StepNavPro
           <div className="mt-6 px-3">
             <div className="flex justify-between text-xs text-gray-600 mb-1.5">
               <span>Progress</span>
-              <span>{Math.round((completedSteps.size / STEPS.length) * 100)}%</span>
+              <span>{Math.round(((currentStep + 1) / STEPS.length) * 100)}%</span>
             </div>
             <div className="h-1 bg-[#1a1b2e] rounded-full overflow-hidden">
               <div
                 className="h-full bg-gradient-to-r from-accent to-cyan-400 rounded-full transition-all duration-500"
-                style={{ width: `${(completedSteps.size / STEPS.length) * 100}%` }}
+                style={{ width: `${((currentStep + 1) / STEPS.length) * 100}%` }}
               />
             </div>
           </div>
