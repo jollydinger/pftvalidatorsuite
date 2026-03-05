@@ -180,7 +180,8 @@ curl -s -X POST http://localhost:5005 \\
                 { state: 'connected', color: 'text-yellow-400', desc: 'Normal on startup — node is connecting to peers' },
                 { state: 'syncing', color: 'text-yellow-400', desc: 'Downloading and verifying ledger history' },
                 { state: 'tracking', color: 'text-blue-400', desc: 'Caught up with peers, not yet voting' },
-                { state: 'proposing / validating', color: 'text-green-400', desc: 'Fully operational — participating in consensus' },
+                { state: 'full', color: 'text-green-400', desc: 'Fully synced and participating in consensus' },
+                { state: 'proposing / validating', color: 'text-green-400', desc: 'Actively voting in UNL consensus rounds' },
               ].map((item, i) => (
                 <div key={i} className="flex items-start gap-3">
                   <code className={`font-mono text-xs ${item.color} shrink-0 mt-0.5`}>{item.state}</code>
