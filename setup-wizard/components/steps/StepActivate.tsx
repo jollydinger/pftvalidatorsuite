@@ -10,23 +10,19 @@ export function StepActivate({ config, onNext, onBack }: StepProps) {
   const regenerateTokenCmd = `# Re-display your validator token (use the value you saved earlier, or run this again)
 docker exec postfiatd validator-keys create_token --keyfile /root/.ripple/validator-keys.json`
 
-  const checkConfigCmd = `# Confirm the config file exists and check if token is already present
-docker exec postfiatd grep -c "validator_token" /etc/opt/ripple/rippled.cfg
+  const checkConfigCmd = `# Check if the token is already configured
+docker exec postfiatd grep -c "validator_token" /etc/postfiatd/postfiatd.cfg
 # Returns 0 = not yet configured, 1 = already configured`
 
   const addTokenCmd = `# Open a shell inside the container
 docker exec -it postfiatd bash
 
-# Inside the container — append your validator token to the config.
-# Replace TOKEN_VALUE with the long string output from the step above
-# (do NOT include the [validator_token] line — just the value itself)
-cat >> /etc/opt/ripple/rippled.cfg << 'EOF'
-[validator_token]
-TOKEN_VALUE
-EOF
+# Copy your token from step 1 — remove ALL line breaks so it is one continuous string.
+# Replace TOKEN_VALUE below with that single-line string.
+printf '\\n[validator_token]\\nTOKEN_VALUE\\n' >> /etc/postfiatd/postfiatd.cfg
 
 # Verify it was written correctly
-tail -3 /etc/opt/ripple/rippled.cfg
+tail -3 /etc/postfiatd/postfiatd.cfg
 
 # Exit the container shell
 exit`
@@ -34,8 +30,8 @@ exit`
   const restartCmd = `# Restart the validator to apply the new config
 docker restart postfiatd`
 
-  const verifyCmd = `# Watch logs for manifest/token confirmation (Ctrl+C to stop)
-docker logs -f postfiatd 2>&1 | grep -E "Manifest|token|validator" | head -20`
+  const verifyCmd = `# Watch logs for manifest/token confirmation
+docker logs postfiatd 2>&1 | grep -E "Manifest|token|validator" | head -20`
 
   const rpcVerifyCmd = `# Confirm the node is now in validating mode
 curl -s -X POST http://localhost:5005 \\
@@ -81,9 +77,9 @@ curl -s -X POST http://localhost:5005 \\
           </div>
           <CodeBlock code={regenerateTokenCmd} label={`${config.sshUser}@${config.serverIp}`} multiline />
           <p className="text-xs text-gray-500 mt-2">
-            The output is a long base64 string. You&apos;ll paste just that value (not the
-            <code className="font-mono text-xs bg-[#08090f] px-1 rounded border border-[#1e1f35] mx-1">[validator_token]</code>
-            header) into the next step.
+            The output is a long base64 string that may display with line breaks — that&apos;s just
+            terminal wrapping. When you copy it for the next step, <strong className="text-gray-300">remove all line breaks</strong> so
+            it is one continuous string.
           </p>
         </div>
 
@@ -110,10 +106,7 @@ curl -s -X POST http://localhost:5005 \\
           <CodeBlock code={addTokenCmd} label={`${config.sshUser}@${config.serverIp}`} multiline />
           <div className="mt-3 rounded-lg border border-amber-500/20 bg-amber-500/5 p-3">
             <p className="text-xs text-amber-300/80 leading-relaxed">
-              <strong className="text-amber-300">Important:</strong> Replace <code className="font-mono bg-amber-500/10 px-1 rounded">TOKEN_VALUE</code> with
-              the long base64 string from step 1 — the token value only, not the
-              <code className="font-mono bg-amber-500/10 px-1 rounded mx-1">[validator_token]</code>
-              header line. The heredoc already adds that header for you.
+              <strong className="text-amber-300">Important:</strong> The token output from step 1 has line breaks — remove them all so it is one continuous string before pasting as <code className="font-mono bg-amber-500/10 px-1 rounded">TOKEN_VALUE</code>. Line breaks in the token will break the command.
             </p>
           </div>
         </div>
