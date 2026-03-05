@@ -19,10 +19,10 @@ const config: Config = {
           3: '#1a1b2e',
         },
         accent: {
-          DEFAULT: '#4f8ef7',
-          bright: '#6ea8ff',
-          dim: '#2563eb',
-          glow: 'rgba(79, 142, 247, 0.15)',
+          DEFAULT: '#f43f5e',
+          bright: '#fb7185',
+          dim: '#e11d48',
+          glow: 'rgba(244, 63, 94, 0.15)',
         },
       },
       animation: {

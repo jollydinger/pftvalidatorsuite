@@ -6,16 +6,16 @@ export default function HomePage() {
       {/* Background effects */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-0 left-1/4 w-[600px] h-[600px] rounded-full opacity-[0.03]"
-          style={{ background: 'radial-gradient(circle, #4f8ef7, transparent)' }} />
+          style={{ background: 'radial-gradient(circle, #f43f5e, transparent)' }} />
         <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] rounded-full opacity-[0.02]"
-          style={{ background: 'radial-gradient(circle, #22d3ee, transparent)' }} />
+          style={{ background: 'radial-gradient(circle, #fb7185, transparent)' }} />
       </div>
 
       {/* Nav */}
       <header className="border-b border-[#1e1f35]/50">
         <nav className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-lg bg-accent flex items-center justify-center shadow-[0_0_12px_rgba(79,142,247,0.4)]">
+            <div className="w-7 h-7 rounded-lg bg-accent flex items-center justify-center shadow-[0_0_12px_rgba(244,63,94,0.4)]">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
                 <path d="M12 2L2 7l10 5 10-5-10-5z" />
                 <path d="M2 17l10 5 10-5" />
@@ -78,7 +78,7 @@ export default function HomePage() {
             href="/setup"
             className="flex items-center gap-2 px-8 py-3.5 bg-accent hover:bg-accent-bright text-white
               font-semibold rounded-xl transition-all duration-150 active:scale-95 text-base
-              shadow-[0_0_30px_rgba(79,142,247,0.25)]"
+              shadow-[0_0_30px_rgba(244,63,94,0.25)]"
           >
             Start the wizard
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -202,7 +202,7 @@ export default function HomePage() {
             href="/setup"
             className="inline-flex items-center gap-2 px-8 py-3.5 bg-accent hover:bg-accent-bright text-white
               font-semibold rounded-xl transition-all duration-150 active:scale-95
-              shadow-[0_0_30px_rgba(79,142,247,0.2)]"
+              shadow-[0_0_30px_rgba(244,63,94,0.2)]"
           >
             Start the wizard
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -218,7 +218,7 @@ export default function HomePage() {
         <div className="max-w-6xl mx-auto px-6 py-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2.5">
             <div className="w-5 h-5 rounded bg-accent/20 flex items-center justify-center">
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#4f8ef7" strokeWidth="2">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#f43f5e" strokeWidth="2">
                 <path d="M12 2L2 7l10 5 10-5-10-5z" />
                 <path d="M2 17l10 5 10-5" />
                 <path d="M2 12l10 5 10-5" />

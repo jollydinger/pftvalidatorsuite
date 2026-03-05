@@ -11,8 +11,8 @@
   --surface-3: #1a1b2e;
   --border: #1e1f35;
   --border-light: #252640;
-  --accent: #4f8ef7;
-  --accent-bright: #6ea8ff;
+  --accent: #f43f5e;
+  --accent-bright: #fb7185;
   --text: #e8eaf0;
   --text-muted: #6b7280;
   --text-subtle: #4b5563;
@@ -56,16 +56,16 @@ body {
 /* Code block selection */
 pre ::selection,
 code ::selection {
-  background: rgba(79, 142, 247, 0.3);
+  background: rgba(244, 63, 94, 0.3);
 }
 
 /* Glow effects */
 .glow-blue {
-  box-shadow: 0 0 40px rgba(79, 142, 247, 0.1), 0 0 80px rgba(79, 142, 247, 0.05);
+  box-shadow: 0 0 40px rgba(244, 63, 94, 0.1), 0 0 80px rgba(244, 63, 94, 0.05);
 }
 
 .glow-border {
-  box-shadow: 0 0 0 1px rgba(79, 142, 247, 0.3), 0 0 20px rgba(79, 142, 247, 0.1);
+  box-shadow: 0 0 0 1px rgba(244, 63, 94, 0.3), 0 0 20px rgba(244, 63, 94, 0.1);
 }
 
 /* Terminal/code text */
@@ -90,7 +90,7 @@ textarea:focus {
 
 /* Animated gradient text */
 .gradient-text {
-  background: linear-gradient(135deg, #4f8ef7 0%, #22d3ee 50%, #4f8ef7 100%);
+  background: linear-gradient(135deg, #f43f5e 0%, #fb7185 50%, #f43f5e 100%);
   background-size: 200% auto;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
