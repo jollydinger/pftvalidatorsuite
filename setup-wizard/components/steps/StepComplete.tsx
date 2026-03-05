@@ -8,11 +8,11 @@ interface StepCompleteProps {
 }
 
 export function StepComplete({ config }: StepCompleteProps) {
-  const logsCmd = `# Live health stream
-docker logs -f pft-healthcheck | python3 -m json.tool 2>/dev/null || docker logs -f pft-healthcheck
+  const logsCmd = `# Live health stream (shows last 5 lines then streams live)
+docker logs -f --tail 5 pft-healthcheck`
 
-# Validator node logs
-docker logs -f postfiatd 2>&1 | tail -50`
+  const nodeLogsCmd = `# Validator node logs
+docker logs -f --tail 50 postfiatd 2>&1`
 
   const statusCmd = `# Quick status check — server state + peer count
 docker logs pft-healthcheck 2>&1 | grep health_summary | tail -1`
@@ -133,7 +133,12 @@ docker stop pft-healthcheck && docker rm pft-healthcheck && docker run -d \\
 
         <div>
           <p className="text-xs text-gray-500 mb-2">View live health data</p>
-          <CodeBlock code={logsCmd} multiline />
+          <CodeBlock code={logsCmd} />
+        </div>
+
+        <div>
+          <p className="text-xs text-gray-500 mb-2">View live validator node logs</p>
+          <CodeBlock code={nodeLogsCmd} />
         </div>
 
         <div>
