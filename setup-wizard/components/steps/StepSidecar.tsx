@@ -38,11 +38,8 @@ docker build -t pft-healthcheck ./sidecar/healthcheck`
 
   const runCmd = buildRunCommand(config)
 
-  const verifyCmd = `# Stream live health data (Ctrl+C to stop)
-docker logs -f pft-healthcheck | python3 -m json.tool
-
-# Quick status check
-docker logs pft-healthcheck 2>&1 | grep health_summary | tail -3`
+  const verifyCmd = `# Show last 5 lines then stream live (Ctrl+C to stop)
+docker logs -f --tail 5 pft-healthcheck`
 
   const restartCmd = `# Restart after config changes
 docker stop pft-healthcheck && docker rm pft-healthcheck

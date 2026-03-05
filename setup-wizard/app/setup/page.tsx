@@ -36,6 +36,14 @@ export default function SetupPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }, [])
 
+  const goToStep = useCallback((index: number) => {
+    if (index < currentStep || completedSteps.has(index)) {
+      setCurrentStep(index)
+      setAnimKey((k) => k + 1)
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  }, [currentStep, completedSteps])
+
   const stepProps = {
     config,
     setConfig,
@@ -105,7 +113,7 @@ export default function SetupPage() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
         <div className="flex gap-10">
           {/* Sidebar nav */}
-          <StepNav currentStep={currentStep} completedSteps={completedSteps} />
+          <StepNav currentStep={currentStep} completedSteps={completedSteps} onStepClick={goToStep} />
 
           {/* Step content */}
           <main className="flex-1 min-w-0">

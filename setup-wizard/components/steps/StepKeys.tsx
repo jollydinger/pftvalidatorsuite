@@ -28,12 +28,6 @@ rm ~/validator-keys-backup.json`
   const tokenCmd = `# Generate your validator token
 docker exec postfiatd validator-keys create_token --keyfile /root/.ripple/validator-keys.json`
 
-  const scoreCmd = config.validatorPubKey
-    ? `# Check your validator's agreement score
-curl -s https://postfiat-onboarding-api.fly.dev/validators/${config.validatorPubKey} | python3 -m json.tool`
-    : `# Check your validator's agreement score (paste your public key first)
-curl -s https://postfiat-onboarding-api.fly.dev/validators/<YOUR_PUBLIC_KEY>`
-
   const canAdvance = backedUp && tokenSaved && config.validatorPubKey.trim().length > 0
 
   const handleNext = () => {
@@ -238,23 +232,6 @@ curl -s https://postfiat-onboarding-api.fly.dev/validators/<YOUR_PUBLIC_KEY>`
           </div>
         </div>
 
-        {/* Step 5: Check agreement score (optional) */}
-        {config.validatorPubKey && (
-          <div>
-            <div className="flex items-center gap-2 mb-3">
-              <span className="w-5 h-5 rounded-full bg-green-500/20 text-green-400 text-xs flex items-center justify-center font-semibold shrink-0">
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                  <polyline points="20 6 9 17 4 12" />
-                </svg>
-              </span>
-              <h3 className="text-sm font-semibold text-gray-200">Check your agreement score (optional)</h3>
-            </div>
-            <CodeBlock code={scoreCmd} label="API check — run anytime" multiline />
-            <p className="text-xs text-gray-500 mt-2">
-              Returns your 1h, 24h, and 30d agreement scores once your node has been validating for a while.
-            </p>
-          </div>
-        )}
       </div>
 
       {/* Gate hint */}

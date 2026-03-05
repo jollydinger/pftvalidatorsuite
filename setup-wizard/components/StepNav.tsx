@@ -5,9 +5,10 @@ import { STEPS } from '@/lib/types'
 interface StepNavProps {
   currentStep: number
   completedSteps: Set<number>
+  onStepClick: (index: number) => void
 }
 
-export function StepNav({ currentStep, completedSteps }: StepNavProps) {
+export function StepNav({ currentStep, completedSteps, onStepClick }: StepNavProps) {
   return (
     <>
       {/* Desktop sidebar */}
@@ -20,16 +21,19 @@ export function StepNav({ currentStep, completedSteps }: StepNavProps) {
             {STEPS.map((step, index) => {
               const isCompleted = completedSteps.has(index)
               const isCurrent = index === currentStep
-              const isUpcoming = index > currentStep && !completedSteps.has(index)
+              const isClickable = isCompleted || index < currentStep
 
               return (
                 <div
                   key={step.id}
+                  onClick={() => isClickable && onStepClick(index)}
                   className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-150 ${
                     isCurrent
                       ? 'bg-accent-glow border border-accent/20 text-accent-bright'
                       : isCompleted
-                      ? 'text-gray-400 hover:text-gray-300'
+                      ? 'text-gray-400 hover:text-gray-300 hover:bg-[#0e0f1a] cursor-pointer'
+                      : index < currentStep
+                      ? 'text-gray-500 hover:text-gray-400 hover:bg-[#0e0f1a] cursor-pointer'
                       : 'text-gray-600'
                   }`}
                 >

@@ -155,6 +155,10 @@ docker restart pft-healthcheck`
               title: 'Check your agreement score after 1 hour',
               desc: 'Your score appears once the network has enough data to calculate it.',
             },
+            {
+              title: 'Your node IP appears immediately — validator takes a few minutes',
+              desc: 'Your server IP will show up in explorer right away, but it may take 2–5 minutes for your validator public key to populate in the validator list.',
+            },
             ...(config.hasDomain && config.domain ? [] : [{
               title: 'Add domain verification later (optional)',
               desc: 'Coming back to add a domain? Run through this wizard again or check the README in the repo.',
