@@ -40,13 +40,10 @@ docker logs -f postfiatd 2>&1`
   const checkCmd = `# Confirm the container is running
 docker ps --filter name=postfiatd
 
-# Quick health check via JSON-RPC
-curl -s -X POST http://localhost:6005 \\
+# Quick health check via JSON-RPC (admin port 5005)
+curl -s -X POST http://localhost:5005 \\
   -H 'Content-Type: application/json' \\
-  -d '{"method":"server_info","params":[{}]}' | python3 -m json.tool 2>/dev/null || \\
-curl -s -X POST http://localhost:6005 \\
-  -H 'Content-Type: application/json' \\
-  -d '{"method":"server_info","params":[]}'`
+  -d '{"method":"server_info","params":[{}]}' | python3 -m json.tool`
 
   return (
     <div className="step-enter">
@@ -163,24 +160,38 @@ curl -s -X POST http://localhost:6005 \\
         </div>
 
         {/* What to expect */}
-        <div className="rounded-xl border border-[#1e1f35] bg-[#0e0f1a] p-4">
-          <h4 className="text-sm font-semibold text-gray-300 mb-3">What to expect from the RPC response</h4>
-          <div className="space-y-2">
-            {[
-              { state: 'connected', color: 'text-yellow-400', desc: 'Normal on startup — node is connecting to peers' },
-              { state: 'syncing', color: 'text-yellow-400', desc: 'Downloading and verifying ledger history' },
-              { state: 'tracking', color: 'text-blue-400', desc: 'Caught up with peers, not yet voting' },
-              { state: 'proposing / validating', color: 'text-green-400', desc: 'Fully operational — participating in consensus' },
-            ].map((item, i) => (
-              <div key={i} className="flex items-start gap-3">
-                <code className={`font-mono text-xs ${item.color} shrink-0 mt-0.5`}>{item.state}</code>
-                <span className="text-xs text-gray-500">{item.desc}</span>
-              </div>
-            ))}
+        <div className="rounded-xl border border-[#1e1f35] bg-[#0e0f1a] p-4 space-y-4">
+          <div>
+            <h4 className="text-sm font-semibold text-gray-300 mb-2">Step 1 — docker ps output</h4>
+            <p className="text-xs text-gray-500 mb-2">
+              If you see a row with <code className="font-mono bg-[#08090f] px-1 rounded border border-[#1e1f35] text-green-400">Up X minutes</code> and all ports listed, your node is running. That&apos;s all you need to confirm at this stage.
+            </p>
+            <pre className="font-mono text-xs text-gray-500 bg-[#08090f] rounded-lg p-3 overflow-x-auto leading-relaxed">{`CONTAINER ID   IMAGE                           STATUS         NAMES
+6a321a1bb8f8   agtipft/postfiatd:testnet-...   Up 2 minutes   postfiatd`}</pre>
           </div>
-          <p className="text-xs text-gray-600 mt-3">
-            It may take several minutes to reach &quot;tracking&quot; state on first boot. This is normal.
-          </p>
+
+          <div className="border-t border-[#1e1f35] pt-4">
+            <h4 className="text-sm font-semibold text-gray-300 mb-2">Step 2 — JSON-RPC server_state</h4>
+            <p className="text-xs text-gray-500 mb-3">
+              The curl response will include a <code className="font-mono bg-[#08090f] px-1 rounded border border-[#1e1f35]">server_state</code> field. These are the expected values in order:
+            </p>
+            <div className="space-y-2">
+              {[
+                { state: 'connected', color: 'text-yellow-400', desc: 'Normal on startup — node is connecting to peers' },
+                { state: 'syncing', color: 'text-yellow-400', desc: 'Downloading and verifying ledger history' },
+                { state: 'tracking', color: 'text-blue-400', desc: 'Caught up with peers, not yet voting' },
+                { state: 'proposing / validating', color: 'text-green-400', desc: 'Fully operational — participating in consensus' },
+              ].map((item, i) => (
+                <div key={i} className="flex items-start gap-3">
+                  <code className={`font-mono text-xs ${item.color} shrink-0 mt-0.5`}>{item.state}</code>
+                  <span className="text-xs text-gray-500">{item.desc}</span>
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-gray-600 mt-3">
+              It may take several minutes to reach &quot;tracking&quot; on first boot. If the curl returns nothing, wait 30 seconds and try again — the RPC port may still be initializing.
+            </p>
+          </div>
         </div>
 
         {/* Confirmation */}
