@@ -1,6 +1,71 @@
 # PFT Validator Suite
 
-Automated health-check sidecar for [Post Fiat Ledger](https://github.com/postfiatorg/pftl-validator) validators.
+Tooling for running and monitoring a [Post Fiat](https://github.com/postfiatorg/postfiatd) validator. This repo contains two components:
+
+| Component | What it does |
+|---|---|
+| **Setup Wizard** (`setup-wizard/`) | Interactive web UI — takes anyone from zero to a running validator in ~15 minutes, no DevOps experience required |
+| **Health-Check Sidecar** (`healthcheck/`) | Docker container that runs alongside `postfiatd`, monitors the node 24/7, and fires Discord/Slack alerts before agreement scores drop |
+
+The setup wizard includes guided sidecar installation as its final step, so both components work together out of the box.
+
+---
+
+## Setup Wizard
+
+A Next.js app deployed at **[your-vercel-url]** (replace with your deployed URL).
+
+Walks validators through the full setup process in 8 guided steps:
+
+1. **Welcome** — requirements, specs, what's included
+2. **Server Provisioning** — choose a VPS, enter IP + network
+3. **Install Docker** — prepare server, configure firewall, install Docker
+4. **Validator Node** — download official compose file, start `postfiatd`
+5. **Key Generation** — view and back up validator keys (private key backup required before advancing)
+6. **Domain Verification** — optional identity linking via `xrp-ledger.toml`
+7. **Health Monitoring** — sidecar setup with optional Discord/Slack alerts
+8. **Complete** — summary, monitoring commands, agreement score API
+
+Every command throughout the wizard is personalized with the user's actual server IP, network, validator public key, and webhook URL — entered once, reflected everywhere.
+
+### Run locally
+
+```bash
+cd setup-wizard
+npm install
+npm run dev
+# → http://localhost:3000
+```
+
+### Deploy to Vercel
+
+Import the repo on [vercel.com](https://vercel.com) and set **Root Directory** to `setup-wizard`. All other settings are auto-detected.
+
+### Setup wizard layout
+
+```
+setup-wizard/
+├── app/
+│   ├── page.tsx                    # Landing page
+│   └── setup/page.tsx              # Wizard container (client component)
+├── components/
+│   ├── CodeBlock.tsx               # Terminal-style code block with copy button
+│   ├── StepNav.tsx                 # Sidebar progress nav + mobile progress bar
+│   └── steps/
+│       ├── StepWelcome.tsx
+│       ├── StepServer.tsx
+│       ├── StepDocker.tsx
+│       ├── StepValidatorNode.tsx
+│       ├── StepKeys.tsx            # Includes private key backup gate
+│       ├── StepDomain.tsx
+│       ├── StepSidecar.tsx
+│       └── StepComplete.tsx
+└── lib/types.ts                    # WizardConfig state + step definitions
+```
+
+---
+
+## Health-Check Sidecar
 
 Runs as a Docker container alongside `postfiatd`, continuously monitors the node, and fires structured alerts when something goes wrong — before your agreement scores start dropping.
 
@@ -44,6 +109,10 @@ All stdout output is newline-delimited JSON, so `docker logs -f pft-healthcheck 
 
 ```
 pftvalidatorsuite/
+├── setup-wizard/               # Interactive validator onboarding UI (Next.js)
+│   ├── app/
+│   ├── components/
+│   └── lib/
 ├── healthcheck/
 │   ├── monitor.py              # async Python monitor (aiohttp)
 │   ├── Dockerfile              # python:3.12-alpine image

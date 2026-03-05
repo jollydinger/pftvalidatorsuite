@@ -1,0 +1,121 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  --bg: #06070d;
+  --surface: #0e0f1a;
+  --surface-2: #13141f;
+  --surface-3: #1a1b2e;
+  --border: #1e1f35;
+  --border-light: #252640;
+  --accent: #4f8ef7;
+  --accent-bright: #6ea8ff;
+  --text: #e8eaf0;
+  --text-muted: #6b7280;
+  --text-subtle: #4b5563;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --error: #ef4444;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--surface);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-light);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3a3c5a;
+}
+
+/* Code block selection */
+pre ::selection,
+code ::selection {
+  background: rgba(79, 142, 247, 0.3);
+}
+
+/* Glow effects */
+.glow-blue {
+  box-shadow: 0 0 40px rgba(79, 142, 247, 0.1), 0 0 80px rgba(79, 142, 247, 0.05);
+}
+
+.glow-border {
+  box-shadow: 0 0 0 1px rgba(79, 142, 247, 0.3), 0 0 20px rgba(79, 142, 247, 0.1);
+}
+
+/* Terminal/code text */
+.font-mono {
+  font-family: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+}
+
+/* Input styling */
+input[type='text'],
+input[type='url'],
+select,
+textarea {
+  outline: none;
+}
+
+input[type='text']:focus,
+input[type='url']:focus,
+select:focus,
+textarea:focus {
+  ring: none;
+}
+
+/* Animated gradient text */
+.gradient-text {
+  background: linear-gradient(135deg, #4f8ef7 0%, #22d3ee 50%, #4f8ef7 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradient-shift 4s ease infinite;
+}
+
+@keyframes gradient-shift {
+  0% { background-position: 0% center; }
+  50% { background-position: 100% center; }
+  100% { background-position: 0% center; }
+}
+
+/* Step animation */
+.step-enter {
+  animation: stepEnter 0.25s ease-out;
+}
+
+@keyframes stepEnter {
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
