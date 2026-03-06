@@ -9,11 +9,11 @@ export function StepDomain({ config, setConfig, onNext, onBack }: StepProps) {
 
   const attestationCmd = config.domain
     ? `# Generate your domain attestation
-docker exec postfiatd /opt/ripple/bin/validator-keys \\
+docker exec postfiatd /usr/local/bin/validator-keys \\
   set_domain ${config.domain} \\
   --keyfile /root/.ripple/validator-keys.json`
     : `# Generate your domain attestation
-docker exec postfiatd /opt/ripple/bin/validator-keys \\
+docker exec postfiatd /usr/local/bin/validator-keys \\
   set_domain your-domain.com \\
   --keyfile /root/.ripple/validator-keys.json`
 
