@@ -31,6 +31,27 @@ docker compose -f docker-compose-validator.yml --env-file .env pull
 # Confirm image is available
 docker images | grep postfiatd`
 
+  const promtailConfigCmd = `cat > promtail-config.yml << 'EOF'
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  - job_name: postfiatd
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: postfiatd
+          __path__: /var/log/postfiatd/*.log
+EOF`
+
   const startCmd = `# Start the validator node
 docker compose -f docker-compose-validator.yml --env-file .env up -d`
 
@@ -110,15 +131,27 @@ curl -s -X POST http://localhost:5005 \\
         <div>
           <div className="flex items-center gap-2 mb-3">
             <span className="w-5 h-5 rounded-full bg-accent/20 text-accent text-xs flex items-center justify-center font-semibold shrink-0">5</span>
-            <h3 className="text-sm font-semibold text-gray-200">Start your node</h3>
+            <h3 className="text-sm font-semibold text-gray-200">Create Promtail config</h3>
           </div>
-          <CodeBlock code={startCmd} label={`${config.sshUser}@${config.serverIp} ~/validator`} multiline />
+          <CodeBlock code={promtailConfigCmd} label={`${config.sshUser}@${config.serverIp} ~/validator`} multiline />
+          <p className="text-xs text-gray-500 mt-2">
+            The compose file requires this config to exist before starting — without it, Docker creates a directory here and promtail fails to launch.
+          </p>
         </div>
 
         {/* Step 6 */}
         <div>
           <div className="flex items-center gap-2 mb-3">
             <span className="w-5 h-5 rounded-full bg-accent/20 text-accent text-xs flex items-center justify-center font-semibold shrink-0">6</span>
+            <h3 className="text-sm font-semibold text-gray-200">Start your node</h3>
+          </div>
+          <CodeBlock code={startCmd} label={`${config.sshUser}@${config.serverIp} ~/validator`} multiline />
+        </div>
+
+        {/* Step 7 */}
+        <div>
+          <div className="flex items-center gap-2 mb-3">
+            <span className="w-5 h-5 rounded-full bg-accent/20 text-accent text-xs flex items-center justify-center font-semibold shrink-0">7</span>
             <h3 className="text-sm font-semibold text-gray-200">Watch startup logs</h3>
           </div>
           <CodeBlock code={logsCmd} label={`${config.sshUser}@${config.serverIp} ~/validator`} multiline />
@@ -127,7 +160,7 @@ curl -s -X POST http://localhost:5005 \\
           </p>
         </div>
 
-        {/* Step 7 — Ctrl+C gate */}
+        {/* Ctrl+C gate */}
         <div className="rounded-xl border-2 border-accent/30 bg-accent/5 p-5">
           <div className="flex items-center gap-3 mb-2">
             <div className="w-8 h-8 rounded-lg bg-accent/20 flex items-center justify-center shrink-0">
