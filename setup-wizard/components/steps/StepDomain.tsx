@@ -155,8 +155,8 @@ location /.well-known/ {
             <p className="text-xs text-gray-500 mb-3">Once published, check that the file is accessible:</p>
             <CodeBlock
               code={config.domain
-                ? `curl -s https://${config.domain}/.well-known/xrp-ledger.toml`
-                : `curl -s https://your-domain.com/.well-known/xrp-ledger.toml`}
+                ? `curl -s https://${config.domain}/.well-known/pft-ledger.toml`
+                : `curl -s https://your-domain.com/.well-known/pft-ledger.toml`}
               label="from your local machine"
             />
           </div>
