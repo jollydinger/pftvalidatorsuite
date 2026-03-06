@@ -113,8 +113,9 @@ location /.well-known/ {
             <CodeBlock code={attestationCmd} label={`${config.sshUser}@${config.serverIp}`} multiline />
             <p className="text-xs text-gray-500 mt-2">
               The command outputs an attestation string that cryptographically links your domain to your validator key.
-              Copy the full attestation value from the output.
+              Copy the full attestation value from the output. It also updates your validator keys file — restart postfiatd after running this so the node picks up the domain.
             </p>
+            <CodeBlock code={`docker restart postfiatd`} label={`${config.sshUser}@${config.serverIp}`} />
           </div>
 
           {/* Step 2 */}
@@ -126,11 +127,11 @@ location /.well-known/ {
             <p className="text-sm text-gray-400 mb-3">
               On your web server, create a file at{' '}
               <code className="font-mono text-xs bg-[#08090f] px-1.5 py-0.5 rounded border border-[#1e1f35] text-accent-bright">
-                {config.domain ? `https://${config.domain}/.well-known/xrp-ledger.toml` : 'https://your-domain.com/.well-known/xrp-ledger.toml'}
+                {config.domain ? `https://${config.domain}/.well-known/pft-ledger.toml` : 'https://your-domain.com/.well-known/pft-ledger.toml'}
               </code>{' '}
               with this content:
             </p>
-            <CodeBlock code={tomlContent} label="xrp-ledger.toml" multiline />
+            <CodeBlock code={tomlContent} label="pft-ledger.toml" multiline />
             <p className="text-xs text-gray-500 mt-2">
               Replace <code className="font-mono text-xs bg-[#08090f] px-1 rounded border border-[#1e1f35]">PASTE_THE_ATTESTATION_STRING_HERE</code> with the full output from step 1.
             </p>
