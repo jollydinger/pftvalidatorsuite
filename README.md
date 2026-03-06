@@ -104,7 +104,7 @@ All commands are defined in individual step components under `setup-wizard/compo
 | `StepValidatorNode.tsx` | Compose file URL, image tag, RPC port |
 | `StepKeys.tsx` | Key generation commands, binary path |
 | `StepActivate.tsx` | Config file path (`/etc/postfiatd/postfiatd.cfg`), restart procedure |
-| `StepDomain.tsx` | `xrp-ledger.toml` format, verification endpoint |
+| `StepDomain.tsx` | `pft-ledger.toml` format, verification endpoint |
 | `StepSidecar.tsx` | Sidecar repo URL, Docker run flags |
 
 ### Confirmed technical details (as of 2026-03-05)
@@ -138,7 +138,7 @@ Walks validators through the full setup process in 9 guided steps:
 4. **Validator Node** — download official compose file, start `postfiatd`, verify sync
 5. **Key Generation** — generate keys, back up key file (required gate), generate token, enter public key
 6. **Activate Validator** — inject token into `postfiatd.cfg`, restart, verify `proposing` state
-7. **Domain Verification** — optional identity linking via `xrp-ledger.toml`
+7. **Domain Verification** — optional identity linking via `pft-ledger.toml`
 8. **Health Monitoring** — clone sidecar, build image, configure webhook alerts, run container
 9. **Complete** — summary card, useful commands, agreement score API
 
