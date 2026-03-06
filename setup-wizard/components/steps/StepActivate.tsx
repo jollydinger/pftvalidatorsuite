@@ -10,10 +10,6 @@ export function StepActivate({ config, onNext, onBack }: StepProps) {
   const regenerateTokenCmd = `# Re-display your validator token (use the value you saved earlier, or run this again)
 docker exec postfiatd validator-keys create_token --keyfile /root/.ripple/validator-keys.json`
 
-  const checkConfigCmd = `# Check if the token is already configured
-docker exec postfiatd grep -c "validator_token" /etc/postfiatd/postfiatd.cfg
-# Returns 0 = not yet configured, 1 = already configured`
-
   const enterContainerCmd = `docker exec -it postfiatd bash`
 
   const addTokenCmd = `# Replace TOKEN_VALUE with your token from step 1 (one continuous string, no line breaks)
@@ -81,24 +77,10 @@ curl -s -X POST http://localhost:5005 \\
           </p>
         </div>
 
-        {/* Step 2: Check if already configured */}
+        {/* Step 2: Add token to config */}
         <div>
           <div className="flex items-center gap-2 mb-3">
             <span className="w-5 h-5 rounded-full bg-accent/20 text-accent text-xs flex items-center justify-center font-semibold shrink-0">2</span>
-            <h3 className="text-sm font-semibold text-gray-200">Check if the token is already in your config</h3>
-          </div>
-          <CodeBlock code={checkConfigCmd} label={`${config.sshUser}@${config.serverIp}`} multiline />
-          <p className="text-xs text-gray-500 mt-2">
-            If it returns <code className="font-mono text-xs bg-[#08090f] px-1 rounded border border-[#1e1f35]">1</code>, skip
-            to step 4 — your token is already configured. If it returns
-            <code className="font-mono text-xs bg-[#08090f] px-1 rounded border border-[#1e1f35] ml-1">0</code>, continue to step 3.
-          </p>
-        </div>
-
-        {/* Step 3: Add token to config */}
-        <div>
-          <div className="flex items-center gap-2 mb-3">
-            <span className="w-5 h-5 rounded-full bg-accent/20 text-accent text-xs flex items-center justify-center font-semibold shrink-0">3</span>
             <h3 className="text-sm font-semibold text-gray-200">Add the token to your validator config</h3>
           </div>
 
@@ -120,10 +102,10 @@ curl -s -X POST http://localhost:5005 \\
           </div>
         </div>
 
-        {/* Step 4: Restart */}
+        {/* Step 3: Restart */}
         <div>
           <div className="flex items-center gap-2 mb-3">
-            <span className="w-5 h-5 rounded-full bg-accent/20 text-accent text-xs flex items-center justify-center font-semibold shrink-0">4</span>
+            <span className="w-5 h-5 rounded-full bg-accent/20 text-accent text-xs flex items-center justify-center font-semibold shrink-0">3</span>
             <h3 className="text-sm font-semibold text-gray-200">Restart your validator</h3>
           </div>
           <CodeBlock code={restartCmd} label={`${config.sshUser}@${config.serverIp}`} />
@@ -137,10 +119,10 @@ curl -s -X POST http://localhost:5005 \\
           </div>
         </div>
 
-        {/* Step 5: Verify */}
+        {/* Step 4: Verify */}
         <div>
           <div className="flex items-center gap-2 mb-3">
-            <span className="w-5 h-5 rounded-full bg-accent/20 text-accent text-xs flex items-center justify-center font-semibold shrink-0">5</span>
+            <span className="w-5 h-5 rounded-full bg-accent/20 text-accent text-xs flex items-center justify-center font-semibold shrink-0">4</span>
             <h3 className="text-sm font-semibold text-gray-200">Verify the token loaded</h3>
           </div>
           <CodeBlock code={verifyCmd} label={`${config.sshUser}@${config.serverIp}`} multiline />
