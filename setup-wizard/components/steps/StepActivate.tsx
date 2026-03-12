@@ -97,7 +97,7 @@ curl -s -X POST http://localhost:5005 \\
           <CodeBlock code={addTokenCmd} label="inside postfiatd container" multiline />
           <div className="mt-3 rounded-lg border border-amber-500/20 bg-amber-500/5 p-3">
             <p className="text-xs text-amber-300/80 leading-relaxed">
-              <strong className="text-amber-300">Important:</strong> The token output from step 1 has line breaks — remove them all so it is one continuous string before pasting as <code className="font-mono bg-amber-500/10 px-1 rounded">TOKEN_VALUE</code>. Line breaks will break the command.
+              <strong className="text-amber-300">Important:</strong> The token output from step 1 has line breaks — remove them all so it is one continuous string before pasting as <code className="font-mono bg-amber-500/10 px-1 rounded">TOKEN_VALUE</code>. Line breaks will break the command. Also keep the <code className="font-mono bg-amber-500/10 px-1 rounded">\n</code> that appears before <code className="font-mono bg-amber-500/10 px-1 rounded">TOKEN_VALUE</code> in the command — only remove line breaks from the token itself.
             </p>
           </div>
         </div>
@@ -155,7 +155,7 @@ curl -s -X POST http://localhost:5005 \\
         </div>
 
         {/* Confirmation */}
-        <div className="rounded-xl border border-[#1e1f35] bg-[#0e0f1a] p-4">
+        <div className="rounded-xl border border-accent/40 bg-[#0e0f1a] p-4">
           <label className="flex items-center gap-3 cursor-pointer">
             <div
               onClick={() => setConfirmed(!confirmed)}

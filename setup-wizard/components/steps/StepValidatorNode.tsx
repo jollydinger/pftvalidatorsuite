@@ -229,7 +229,7 @@ curl -s -X POST http://localhost:5005 \\
         </div>
 
         {/* Confirmation */}
-        <div className="rounded-xl border border-[#1e1f35] bg-[#0e0f1a] p-4">
+        <div className="rounded-xl border border-accent/40 bg-[#0e0f1a] p-4">
           <label className="flex items-center gap-3 cursor-pointer">
             <div
               onClick={() => setConfirmed(!confirmed)}

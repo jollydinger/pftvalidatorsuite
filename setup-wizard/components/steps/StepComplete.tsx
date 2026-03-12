@@ -54,6 +54,33 @@ docker stop pft-healthcheck && docker rm pft-healthcheck && docker run -d \\
         </p>
       </div>
 
+      {/* Validator explorer link */}
+      <div className="rounded-xl border border-[#1e1f35] bg-[#0e0f1a] p-4 mb-6 flex items-start gap-3">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-accent shrink-0 mt-0.5">
+          <circle cx="11" cy="11" r="8" />
+          <line x1="21" y1="21" x2="16.65" y2="16.65" />
+        </svg>
+        <div>
+          <p className="text-sm font-medium text-gray-200 mb-1">Check the validator list</p>
+          <p className="text-xs text-gray-500 mb-2">
+            Your validator should appear on the network explorer shortly. It may take a couple of minutes to show up after first starting.
+          </p>
+          <a
+            href="https://explorer.testnet.postfiat.org/network/validators"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 text-xs text-accent hover:text-accent-bright transition-colors"
+          >
+            explorer.testnet.postfiat.org/network/validators
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+              <polyline points="15 3 21 3 21 9" />
+              <line x1="10" y1="14" x2="21" y2="3" />
+            </svg>
+          </a>
+        </div>
+      </div>
+
       {/* Summary card */}
       <div className="rounded-xl border border-[#1e1f35] bg-[#0e0f1a] p-6 mb-6">
         <h3 className="text-sm font-semibold text-gray-300 mb-4">Setup Summary</h3>

@@ -75,6 +75,7 @@ docker compose version`
           <p className="text-xs text-gray-500 mt-2">
             Your VPS provider will have emailed you a root password or let you add an SSH key during setup — use that to authenticate.
             If prompted <code className="font-mono bg-[#08090f] px-1 rounded border border-[#1e1f35]">Are you sure you want to continue connecting?</code> type <code className="font-mono bg-[#08090f] px-1 rounded border border-[#1e1f35]">yes</code> and press Enter.
+            When entering your password, nothing will appear as you type — no dots, no characters. This is normal SSH behaviour; just type your password and press Enter.
           </p>
         </div>
 
@@ -131,7 +132,7 @@ docker compose version`
         </div>
 
         {/* Confirmation */}
-        <div className="rounded-xl border border-[#1e1f35] bg-[#0e0f1a] p-4">
+        <div className="rounded-xl border border-accent/40 bg-[#0e0f1a] p-4">
           <label className="flex items-center gap-3 cursor-pointer">
             <div
               onClick={() => setConfirmed(!confirmed)}

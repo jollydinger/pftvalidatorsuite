@@ -175,7 +175,7 @@ docker exec postfiatd validator-keys create_token --keyfile /root/.ripple/valida
           </p>
 
           {/* Token save confirmation */}
-          <div className="mt-3 rounded-lg border border-[#1e1f35] bg-[#0e0f1a] p-4">
+          <div className="mt-3 rounded-lg border border-accent/40 bg-[#0e0f1a] p-4">
             <label className="flex items-start gap-3 cursor-pointer">
               <div
                 onClick={() => setTokenSaved(!tokenSaved)}

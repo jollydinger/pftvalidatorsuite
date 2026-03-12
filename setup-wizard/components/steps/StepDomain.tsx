@@ -17,8 +17,7 @@ docker exec postfiatd /usr/local/bin/validator-keys \\
   set_domain your-domain.com \\
   --keyfile /root/.ripple/validator-keys.json`
 
-  const tomlContent = `[validator]
-name = "${config.domain || 'your-validator-name'}"
+  const tomlContent = `[[VALIDATORS]]
 public_key = "${config.validatorPubKey || 'nYOUR_PUBLIC_KEY_HERE'}"
 attestation = "PASTE_THE_ATTESTATION_STRING_HERE"`
 
