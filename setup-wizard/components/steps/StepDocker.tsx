@@ -133,9 +133,8 @@ docker compose version`
 
         {/* Confirmation */}
         <div className="rounded-xl border border-accent/40 bg-[#0e0f1a] p-4">
-          <label className="flex items-center gap-3 cursor-pointer">
+          <label className="flex items-center gap-3 cursor-pointer" onClick={() => setConfirmed(!confirmed)}>
             <div
-              onClick={() => setConfirmed(!confirmed)}
               className={`w-5 h-5 rounded flex items-center justify-center border transition-all shrink-0
                 ${confirmed
                   ? 'bg-accent border-accent'

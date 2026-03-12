@@ -139,9 +139,8 @@ docker exec postfiatd validator-keys create_token --keyfile /root/.ripple/valida
           </div>
 
           {/* Backup confirmation checkbox */}
-          <label className="flex items-start gap-3 cursor-pointer">
+          <label className="flex items-start gap-3 cursor-pointer" onClick={() => setBackedUp(!backedUp)}>
             <div
-              onClick={() => setBackedUp(!backedUp)}
               className={`w-5 h-5 rounded flex items-center justify-center border transition-all shrink-0 mt-0.5
                 ${backedUp
                   ? 'bg-amber-500 border-amber-500'
@@ -176,9 +175,8 @@ docker exec postfiatd validator-keys create_token --keyfile /root/.ripple/valida
 
           {/* Token save confirmation */}
           <div className="mt-3 rounded-lg border border-accent/40 bg-[#0e0f1a] p-4">
-            <label className="flex items-start gap-3 cursor-pointer">
+            <label className="flex items-start gap-3 cursor-pointer" onClick={() => setTokenSaved(!tokenSaved)}>
               <div
-                onClick={() => setTokenSaved(!tokenSaved)}
                 className={`w-5 h-5 rounded flex items-center justify-center border transition-all shrink-0 mt-0.5
                   ${tokenSaved
                     ? 'bg-accent border-accent'
