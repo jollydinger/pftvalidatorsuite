@@ -9,7 +9,7 @@ Tooling for running and monitoring a [Post Fiat](https://github.com/postfiatorg/
 
 The setup wizard includes guided sidecar installation as part of the flow, so both components work together out of the box.
 
-**Live wizard:** [pftvalidatorsuite.vercel.app/setup](https://pftvalidatorsuite.vercel.app/setup)
+**Live wizard:** [https://jollydinger.com/pftvalidatorsetup/setup/](https://jollydinger.com/pftvalidatorsetup/setup/)
 
 ---
 
@@ -63,7 +63,7 @@ The setup wizard is open source and designed to be embedded or linked from offic
 Point new validators to the wizard from docs, Discord, or your website:
 
 ```
-https://pftvalidatorsuite.vercel.app/setup
+https://jollydinger.com/pftvalidatorsetup/setup/
 ```
 
 No configuration required.
@@ -74,7 +74,7 @@ Add a page on the official docs site that iframes the wizard at full height:
 
 ```html
 <iframe
-  src="https://pftvalidatorsuite.vercel.app/setup"
+  src="https://jollydinger.com/pftvalidatorsetup/setup/"
   style="width:100%; height:100vh; border:none;"
   allow="clipboard-write"
   title="PFT Validator Setup Wizard"
@@ -128,7 +128,7 @@ These were verified during the E2E test and are reflected in the wizard:
 
 ## Setup Wizard
 
-**Live:** [pftvalidatorsuite.vercel.app/setup](https://pftvalidatorsuite.vercel.app/setup)
+**Live:** [https://jollydinger.com/pftvalidatorsetup/setup/](https://jollydinger.com/pftvalidatorsetup/setup/)
 
 Walks validators through the full setup process in 9 guided steps:
 
