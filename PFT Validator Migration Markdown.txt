@@ -1,0 +1,487 @@
+  ## Prerequisites (MANUAL — done by the user before the agent starts)
+
+  1. Provision a new Vultr VPS: Ubuntu 22.04 LTS, specs matching or exceeding old server
+  2. SSH access to the new server as root
+  3. Place the `validator-keys.json` file at `/opt/postfiatd/validator-keys.json` on the
+     new server (transfer it securely from the old server — this contains the secret key)
+
+  The `validator-keys.json` file on the old server is at `/opt/postfiatd/validator-keys.json`.
+  To transfer it, run this FROM YOUR LOCAL MACHINE (not from either server):
+
+  # Download from old server to your local machine
+  scp root@OLD_IP:/opt/postfiatd/validator-keys.json ./validator-keys.json
+
+  # Upload to new server (replace NEW_IP)
+  scp ./validator-keys.json root@NEW_IP:/tmp/validator-keys.json
+
+  # Then delete the local copy
+  rm ./validator-keys.json
+
+  The agent instructions below will move it from `/tmp/` to the correct location.
+
+
+
+  # PFT Validator Migration Guide — Zero-Downtime VPS Transfer
+
+  ## Overview
+
+  **Goal:** Migrate your PFT validator from an OLD VPS to a NEW VPS with zero validation downtime.
+
+  **What you need to know before starting:**
+  - Your validator public key (from `validator-keys.json`)
+  - Your current token sequence number (from `validator-keys.json`)
+  - Your domain (if applicable)
+  - The Docker image: `agtipft/postfiatd:testnet-full-latest`
+
+  **How the handoff works:**
+  The validator uses a two-layer key system. The master key (in `validator-keys.json`) is
+  the permanent identity. The validator token contains an ephemeral signing key with a
+  monotonically increasing sequence number. When the network sees a manifest with a higher
+  sequence, it immediately trusts only that manifest and ignores the old one. So you can
+  start the new server (sequence N+1) while the old (sequence N) is still running — the
+  network seamlessly switches. No gap, no Byzantine detection.
+
+  ---
+
+  ## PART A: Everything on the NEW server
+
+  > All commands in this section run on the NEW server.
+
+  ### A1. System setup
+
+  apt update && apt upgrade -y
+  apt install -y curl ca-certificates ufw gnupg git
+
+  ### A2. Configure firewall
+
+  ufw allow ssh
+  ufw allow 2559/tcp
+  ufw allow 6005/tcp
+  ufw --force enable
+  ufw status
+
+  ### A3. Install Docker
+
+  curl -fsSL https://get.docker.com | sh
+  docker --version
+  docker compose version
+
+  ### A4. Create directory structure
+
+  mkdir -p /opt/postfiatd/logs
+
+  ### A5. Move validator-keys.json into place
+
+  This file should have been placed at `/tmp/validator-keys.json` during the prerequisites.
+
+  mv /tmp/validator-keys.json /opt/postfiatd/validator-keys.json
+  chmod 600 /opt/postfiatd/validator-keys.json
+
+  Verify it contains your correct public key:
+
+  cat /opt/postfiatd/validator-keys.json
+
+  The `public_key` field MUST match your validator's known public key.
+
+  ### A6. Create docker-compose.yml
+
+  cat > /opt/postfiatd/docker-compose.yml << 'EOF'
+  version: '3.8'
+  services:
+    postfiatd:
+      image: agtipft/postfiatd:testnet-full-latest
+      container_name: postfiatd
+      network_mode: host
+      volumes:
+        - ./postfiatd.cfg:/etc/postfiatd/postfiatd.cfg:ro
+        - ./validators.txt:/etc/postfiatd/validators.txt:ro
+        - postfiatd-data:/var/lib/postfiatd/db
+        - ./logs:/var/log/postfiatd
+      user: "0:0"
+      restart: unless-stopped
+      logging:
+        driver: "json-file"
+        options:
+          max-size: "100m"
+          max-file: "10"
+
+    promtail:
+      image: grafana/promtail:3.0.0
+      container_name: promtail
+      hostname: ${HOSTNAME}
+      volumes:
+        - ./promtail-config.yml:/etc/promtail/config.yml:ro
+        - ./logs:/var/log/postfiatd:ro
+        - promtail-positions:/tmp
+      command: >
+        -config.file=/etc/promtail/config.yml
+      restart: unless-stopped
+      depends_on:
+        - postfiatd
+
+  volumes:
+    postfiatd-data:
+    promtail-positions:
+  EOF
+
+  ### A7. Create validators.txt
+
+  cat > /opt/postfiatd/validators.txt << 'EOF'
+  [validator_list_sites]
+  https://postfiat.org/testnet_vl.json
+
+  [validator_list_keys]
+  ED3F1E0DA736FCF99BE2880A60DBD470715C0E04DD793FB862236B070571FC09E2
+
+  [validator_list_threshold]
+  0
+  EOF
+
+  ### A8. Create promtail-config.yml
+
+  cat > /opt/postfiatd/promtail-config.yml << 'EOF'
+  server:
+    http_listen_port: 9080
+    grpc_listen_port: 0
+
+  positions:
+    filename: /tmp/positions.yaml
+
+  clients: []
+
+  scrape_configs:
+  - job_name: postfiatd
+  static_configs:
+    - targets:
+        - localhost
+  labels:
+    job: postfiatd
+    path: /var/log/postfiatd/*.log
+  EOF
+
+  ### A9. Create postfiatd.cfg (WITHOUT validator_token — added in next step)
+
+  Replace `YOUR_DOMAIN` with your validator's domain and `NEW_IP` with the IP address of this new server.
+
+  cat > /opt/postfiatd/postfiatd.cfg << 'CFGEOF'
+  [server]
+  port_rpc_admin_local
+  port_peer
+  port_ws_admin_local
+  port_ws_public
+
+  [port_rpc_admin_local]
+  port = 5005
+  ip = 0.0.0.0
+  admin = 127.0.0.1
+  protocol = http
+
+  [port_peer]
+  port = 2559
+  ip = 0.0.0.0
+  protocol = peer
+
+  [port_ws_admin_local]
+  port = 6006
+  ip = 127.0.0.1
+  admin = 127.0.0.1
+  protocol = ws
+  send_queue_limit = 500
+
+  [port_grpc]
+  port = 50051
+  ip = 127.0.0.1
+  secure_gateway = 127.0.0.1
+
+  [port_ws_public]
+  port = 6005
+  ip = 0.0.0.0
+  protocol = wss
+
+  [ips]
+  rpc.testnet.postfiat.org 2559
+  96.30.199.55 2559
+  144.202.24.188 2559
+  45.32.222.206 2559
+  144.202.31.74 2559
+  144.202.16.242 2559
+
+  [peer_private]
+  0
+
+  [network_id]
+  2025
+
+  [amendment_majority_time]
+  3 days
+
+  [ledger_history]
+  256
+
+  [node_db]
+  type=NuDB
+  path=/var/lib/postfiatd/db/nudb
+  online_delete=512
+  advisory_delete=0
+
+  [database_path]
+  /var/lib/postfiatd/db
+
+  [debug_logfile]
+  /var/log/postfiatd/debug.log
+
+  [validators_file]
+  validators.txt
+
+  [rpc_startup]
+  { "command": "log_level", "severity": "info" }
+
+  [ssl_verify]
+  1
+
+  [validator_exclusions_sources]
+  https://postfiat.org/exclusions.json|nHUZVCRuBG2i8ay2zptGUgPw2D1nEKMQPqvJZUHAjfmWYXJMy7QD
+
+  [validator_exclusions_interval]
+  300
+
+  [server_domain]
+  YOUR_DOMAIN
+
+  public_ip = NEW_IP
+  CFGEOF
+
+  **IMPORTANT:** After creating this file, replace the placeholders:
+
+  sed -i "s/YOUR_DOMAIN/your-actual-domain.com/" /opt/postfiatd/postfiatd.cfg
+  sed -i "s/public_ip = NEW_IP/public_ip = $(curl -s ifconfig.me)/" /opt/postfiatd/postfiatd.cfg
+
+  ### A10. Pull the Docker image
+
+  cd /opt/postfiatd && docker compose pull
+
+  ### A11. Generate new validator token and append to config
+
+  This step generates a new token and automatically appends it to the config file.
+
+  **IMPORTANT:** You must override the container entrypoint to run `validator-keys`
+  directly, and omit the `--keyfile` flag (it uses the default path automatically).
+
+  Generate the token and capture just the [validator_token] section
+
+  TOKEN_BLOCK=$(docker run --rm
+    --entrypoint /usr/local/bin/validator-keys
+    -v /opt/postfiatd/validator-keys.json:/root/.ripple/validator-keys.json
+    agtipft/postfiatd:testnet-full-latest
+    create_token 2>/dev/null | sed -n '/^[validator_token]/,$ p')
+
+  Display it so you can verify
+
+  echo "=== Generated Token ==="
+  echo "$TOKEN_BLOCK"
+  echo "======================="
+
+  Append to config
+
+  printf '\n%s\n' "$TOKEN_BLOCK" >> /opt/postfiatd/postfiatd.cfg
+
+  Verify the config ends correctly
+
+  echo ""
+  echo "=== Last 15 lines of postfiatd.cfg ==="
+  tail -15 /opt/postfiatd/postfiatd.cfg
+
+  Verify: the last lines of the config should show `[validator_token]` followed by a
+  base64 blob. The output should also confirm your validator public key.
+
+  ### A12. Start postfiatd
+
+  cd /opt/postfiatd && docker compose up -d
+
+  ### A13. Wait for sync and verify
+
+  The node must reach `full` or `proposing` state before the migration is complete.
+  This typically takes 5-10 minutes from cold start.
+
+  Check state (repeat every 30 seconds until "full" or "proposing")
+
+  curl -s -X POST http://localhost:5005
+    -H 'Content-Type: application/json'
+    -d '{"method":"server_info","params":[{}]}'
+    | python3 -c "
+  import sys, json
+  d = json.load(sys.stdin)
+  info = d.get('result', {}).get('info', {})
+  print('server_state:', info.get('server_state', 'UNKNOWN'))
+  print('pubkey_validator:', info.get('pubkey_validator', 'UNKNOWN'))
+  vl = info.get('validated_ledger', {})
+  print('validated_ledger_seq:', vl.get('seq', 'UNKNOWN'))
+  print('uptime:', info.get('uptime', 'UNKNOWN'))
+  "
+
+  **Expected final output:**
+
+  server_state: proposing
+  pubkey_validator: YOUR_VALIDATOR_PUBLIC_KEY
+  validated_ledger_seq:
+  uptime:
+
+  **DO NOT proceed until `server_state` is `full` or `proposing` AND `pubkey_validator`
+  matches your validator's known public key.**
+
+  If `server_state` stays at `connected` for more than 5 minutes, check logs:
+
+  docker logs --tail 50 postfiatd 2>&1
+
+   ### A14. Deploy the health-check sidecar
+
+  ```
+  cd /opt/postfiatd
+  git clone https://github.com/jollydinger/pftvalidatorsuite.git sidecar
+  mkdir -p /opt/postfiatd/sidecar/logs/healthcheck
+
+  # Build the health-check Docker image
+  docker build -t pft-healthcheck /opt/postfiatd/sidecar/healthcheck
+
+  # Run the health-check
+  # To enable Discord alerts, add: -e WEBHOOK_URL=https://discord.com/api/webhooks/YOUR_WEBHOOK_HERE
+  # WEBHOOK_TYPE defaults to "discord". Other options: "slack", "generic"
+  docker run -d \
+    --name pft-healthcheck \
+    --network host \
+    -e NODE_RPC_URL=http://127.0.0.1:5005 \
+    -e POLL_INTERVAL_SECONDS=15 \
+    -e WEBHOOK_URL=https://discord.com/api/webhooks/YOUR_WEBHOOK_HERE \
+    -v /opt/postfiatd/sidecar/logs/healthcheck:/var/log/healthcheck \
+    --restart unless-stopped \
+    pft-healthcheck
+
+  # Verify it's working (wait 15-30 seconds then check)
+  sleep 20
+  docker logs --tail 5 pft-healthcheck
+  ```
+
+  Healthy output shows `"state": "proposing"`, `"node_reachable": true`, and
+  `"webhook_enabled": true`. Note: low peer count warnings at startup are normal —
+  peers accumulate over minutes. 
+
+  ---
+
+  ## PART B: Shut down the OLD server
+
+  > Only do this AFTER Part A is complete and the new server shows `proposing` state.
+
+  Because the new server is already proposing with a higher-sequence token, the
+  network has already switched to trusting the new server. The old server's validations
+  are being silently ignored.
+
+  You can either gracefully stop the old validator:
+
+  cd /opt/postfiatd && docker compose down
+
+  Or simply **destroy/delete the old VPS entirely** — the effect is the same since the
+  network is already ignoring the old token.
+
+  ---
+
+  ## PART C: Post-migration verification
+
+  ### C1. Check the explorer
+
+  Visit https://explorer.testnet.postfiat.org/network/validators and confirm your
+  validator is shown as active with a healthy agreement score.
+
+  ---
+
+  ## PART D: After maintenance — decision
+
+  Once the maintenance on the old VPS is complete:
+
+  **Option A: Stay on the new server (recommended if working well)**
+  - No action needed — you're already running
+  - Destroy or repurpose the old VPS when ready
+
+  **Option B: Migrate back to the old server**
+  - Same process in reverse
+  - Generate a new token (next sequence) on the old server
+  - Same seamless handoff — start old with new sequence, network switches, then stop new
+
+  ---
+
+  ## File inventory on the new server
+
+  After completing Part A, `/opt/postfiatd/` should contain:
+
+  | File | Purpose |
+  |------|---------|
+  | `docker-compose.yml` | Docker services definition |
+  | `postfiatd.cfg` | Validator node configuration (includes validator_token) |
+  | `validators.txt` | Trusted validator list sources |
+  | `validator-keys.json` | Master key pair (KEEP SECURE — never share) |
+  | `promtail-config.yml` | Log shipping configuration |
+  | `logs/` | Log output directory |
+  | `sidecar/` | Health-check sidecar (cloned from GitHub) |
+
+  ## Quick reference commands (for the new server)
+
+  Check validator state
+
+  curl -s -X POST http://localhost:5005
+    -H 'Content-Type: application/json'
+    -d '{"method":"server_info","params":[{}]}' | python3 -m json.tool
+
+  Start validator
+
+  cd /opt/postfiatd && docker compose up -d
+
+  Stop validator gracefully
+
+  cd /opt/postfiatd && docker compose down
+
+  View live logs
+
+  docker logs -f postfiatd 2>&1
+
+  Restart health-check after validator restart
+
+  docker stop pft-healthcheck && docker rm pft-healthcheck &&
+  docker run -d --name pft-healthcheck --network host
+    -e NODE_RPC_URL=http://127.0.0.1:5005 -e POLL_INTERVAL_SECONDS=15
+    -v /opt/postfiatd/sidecar/logs/healthcheck:/var/log/healthcheck
+    --restart unless-stopped pft-healthcheck
+
+  Generate new token (for future migrations)
+
+  docker run --rm
+    --entrypoint /usr/local/bin/validator-keys
+    -v /opt/postfiatd/validator-keys.json:/root/.ripple/validator-keys.json
+    agtipft/postfiatd:testnet-full-latest
+    create_token
+
+  ## Checklist
+
+  **Prerequisites (user does manually):**
+  - [ ] New VPS provisioned (Ubuntu 22.04 LTS recommended)
+  - [ ] validator-keys.json transferred to `/tmp/validator-keys.json` on new server
+
+  **Part A (on NEW server):**
+  - [ ] A1: System packages updated
+  - [ ] A2: Firewall configured (ports 22, 2559, 6005)
+  - [ ] A3: Docker installed
+  - [ ] A4: Directory structure created at `/opt/postfiatd/`
+  - [ ] A5: validator-keys.json moved to `/opt/postfiatd/` with correct permissions
+  - [ ] A6: docker-compose.yml created
+  - [ ] A7: validators.txt created
+  - [ ] A8: promtail-config.yml created
+  - [ ] A9: postfiatd.cfg created with correct domain and `public_ip`
+  - [ ] A10: Docker image pulled
+  - [ ] A11: New token generated and appended to config
+  - [ ] A12: postfiatd started
+  - [ ] A13: Confirmed `server_state: proposing` and correct `pubkey_validator`
+  - [ ] A14: Health-check sidecar deployed and showing OK
+
+  **Part B (OLD server):**
+  - [ ] B1: Old VPS destroyed or old validator stopped
+
+  **Part C (verification):**
+  - [ ] C1: Validator active on explorer with healthy score
