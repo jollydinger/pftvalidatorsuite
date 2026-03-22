@@ -7,6 +7,18 @@ import { CodeBlock } from '@/components/CodeBlock'
 export function StepDomain({ config, setConfig, onNext, onBack }: StepProps) {
   const [error, setError] = useState('')
 
+  const addDomainCmd = config.domain
+    ? `# Add your domain to the validator config
+docker exec postfiatd bash -c "printf '\\n[server_domain]\\n${config.domain}\\n' >> /etc/postfiatd/postfiatd.cfg"
+
+# Verify it was written correctly
+docker exec postfiatd tail -3 /etc/postfiatd/postfiatd.cfg`
+    : `# Add your domain to the validator config
+docker exec postfiatd bash -c "printf '\\n[server_domain]\\nyour-domain.com\\n' >> /etc/postfiatd/postfiatd.cfg"
+
+# Verify it was written correctly
+docker exec postfiatd tail -3 /etc/postfiatd/postfiatd.cfg`
+
   const attestationCmd = config.domain
     ? `# Generate your domain attestation
 docker exec postfiatd /usr/local/bin/validator-keys \\
@@ -107,20 +119,36 @@ location /.well-known/ {
           <div>
             <div className="flex items-center gap-2 mb-3">
               <span className="w-5 h-5 rounded-full bg-accent/20 text-accent text-xs flex items-center justify-center font-semibold shrink-0">1</span>
-              <h3 className="text-sm font-semibold text-gray-200">Generate domain attestation</h3>
+              <h3 className="text-sm font-semibold text-gray-200">Add domain to validator config</h3>
             </div>
-            <CodeBlock code={attestationCmd} label={`${config.sshUser}@${config.serverIp}`} multiline />
-            <p className="text-xs text-gray-500 mt-2">
-              The command outputs an attestation string that cryptographically links your domain to your validator key.
-              Copy the full attestation value from the output. It also updates your validator keys file — restart postfiatd after running this so the node picks up the domain.
+            <p className="text-xs text-gray-500 mb-3">
+              This tells your node to broadcast your domain claim to the network via validator manifests.
             </p>
-            <CodeBlock code={`docker restart postfiatd`} label={`${config.sshUser}@${config.serverIp}`} />
+            <CodeBlock code={addDomainCmd} label={`${config.sshUser}@${config.serverIp}`} multiline />
+            <p className="text-xs text-gray-500 mt-2">
+              You should see the <code className="font-mono text-xs bg-[#08090f] px-1 rounded border border-[#1e1f35]">[server_domain]</code> section
+              followed by your domain at the end of the config file.
+            </p>
           </div>
 
           {/* Step 2 */}
           <div>
             <div className="flex items-center gap-2 mb-3">
               <span className="w-5 h-5 rounded-full bg-accent/20 text-accent text-xs flex items-center justify-center font-semibold shrink-0">2</span>
+              <h3 className="text-sm font-semibold text-gray-200">Generate domain attestation</h3>
+            </div>
+            <CodeBlock code={attestationCmd} label={`${config.sshUser}@${config.serverIp}`} multiline />
+            <p className="text-xs text-gray-500 mt-2">
+              The command outputs an attestation string that cryptographically links your domain to your validator key.
+              Copy the full attestation value from the output. It also updates your validator keys file — restart postfiatd after running this so both changes take effect.
+            </p>
+            <CodeBlock code={`docker restart postfiatd`} label={`${config.sshUser}@${config.serverIp}`} />
+          </div>
+
+          {/* Step 3 */}
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <span className="w-5 h-5 rounded-full bg-accent/20 text-accent text-xs flex items-center justify-center font-semibold shrink-0">3</span>
               <h3 className="text-sm font-semibold text-gray-200">Create the verification file</h3>
             </div>
             <p className="text-sm text-gray-400 mb-3">
@@ -132,14 +160,14 @@ location /.well-known/ {
             </p>
             <CodeBlock code={tomlContent} label="pft-ledger.toml" multiline />
             <p className="text-xs text-gray-500 mt-2">
-              Replace <code className="font-mono text-xs bg-[#08090f] px-1 rounded border border-[#1e1f35]">PASTE_THE_ATTESTATION_STRING_HERE</code> with the full output from step 1.
+              Replace <code className="font-mono text-xs bg-[#08090f] px-1 rounded border border-[#1e1f35]">PASTE_THE_ATTESTATION_STRING_HERE</code> with the full output from step 2.
             </p>
           </div>
 
           {/* CORS note */}
           <div>
             <div className="flex items-center gap-2 mb-3">
-              <span className="w-5 h-5 rounded-full bg-accent/20 text-accent text-xs flex items-center justify-center font-semibold shrink-0">3</span>
+              <span className="w-5 h-5 rounded-full bg-accent/20 text-accent text-xs flex items-center justify-center font-semibold shrink-0">4</span>
               <h3 className="text-sm font-semibold text-gray-200">Enable CORS headers (required)</h3>
             </div>
             <CodeBlock code={nginxExample} label="nginx config example" multiline />
