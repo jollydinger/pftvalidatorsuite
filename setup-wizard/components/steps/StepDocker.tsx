@@ -10,23 +10,44 @@ export function StepDocker({ config, onNext, onBack }: StepProps) {
   const sshCmd = `ssh ${config.sshUser}@${config.serverIp}`
 
   const prepareCmd = `# Update system packages
-sudo apt update && sudo apt upgrade -y
+sudo apt update && sudo DEBIAN_FRONTEND=noninteractive NEEDRESTART_MODE=a apt upgrade -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold"
 
 # Install required utilities
-sudo apt install -y curl ca-certificates ufw gnupg`
+sudo DEBIAN_FRONTEND=noninteractive NEEDRESTART_MODE=a apt install -y curl ca-certificates ufw gnupg iptables-persistent`
 
-  const firewallCmd = `# Allow SSH (important — don't lock yourself out!)
-sudo ufw allow ssh
+  const firewallCmd = `# Reset firewall to a clean state
+sudo ufw --force reset
 
-# Allow PFT validator ports
-sudo ufw allow 2559/tcp    # P2P peer connections
-sudo ufw allow 6005/tcp    # Public JSON-RPC (optional, for external queries)
+# Set secure defaults
+sudo ufw default deny incoming
+sudo ufw default allow outgoing
+
+# Allow SSH (important — don't lock yourself out!)
+sudo ufw allow 22/tcp comment 'SSH'
+
+# Allow P2P peer connections
+sudo ufw allow 2559/tcp comment 'Peer protocol'
 
 # Enable firewall
 sudo ufw --force enable
 
 # Verify rules
-sudo ufw status`
+sudo ufw status verbose`
+
+  const rateLimitCmd = `# Remove any existing rate-limit rules (safe to run on first setup)
+sudo iptables -D INPUT -p tcp --dport 2559 -m state --state ESTABLISHED,RELATED -j ACCEPT 2>/dev/null || true
+sudo iptables -D INPUT -p tcp --dport 2559 -m connlimit --connlimit-above 50 -j DROP 2>/dev/null || true
+sudo iptables -D INPUT -p tcp --dport 2559 -m state --state NEW -m limit --limit 100/second --limit-burst 50 -j ACCEPT 2>/dev/null || true
+sudo iptables -D INPUT -p tcp --dport 2559 -m state --state NEW -j DROP 2>/dev/null || true
+
+# Add rate limiting rules for peer port
+sudo iptables -I INPUT -p tcp --dport 2559 -m state --state NEW -j DROP
+sudo iptables -I INPUT -p tcp --dport 2559 -m state --state NEW -m limit --limit 100/second --limit-burst 50 -j ACCEPT
+sudo iptables -I INPUT -p tcp --dport 2559 -m connlimit --connlimit-above 50 -j DROP
+sudo iptables -I INPUT -p tcp --dport 2559 -m state --state ESTABLISHED,RELATED -j ACCEPT
+
+# Save rules so they survive reboots
+sudo netfilter-persistent save`
 
   const dockerCmd = `# Install Docker using the official script
 curl -fsSL https://get.docker.com | sudo sh
@@ -46,7 +67,7 @@ docker compose version`
       <div className="mb-8">
         <h2 className="text-2xl font-bold text-gray-100 mb-2">Prepare Your Server</h2>
         <p className="text-gray-400">
-          Connect to your server, update packages, configure the firewall, and install Docker.
+          Connect to your server, update packages, configure the firewall with rate limiting, and install Docker.
           Run each block in order.
         </p>
       </div>
@@ -102,15 +123,39 @@ docker compose version`
               <line x1="12" y1="17" x2="12.01" y2="17" />
             </svg>
             <p className="text-xs text-amber-300/80">
-              Always run <code className="font-mono bg-amber-500/10 px-1 rounded">ufw allow ssh</code> before enabling the firewall to avoid locking yourself out.
+              This resets all existing UFW rules. If you have custom rules beyond SSH, re-add them after running this block.
+              SSH is allowed first to prevent lockout.
             </p>
           </div>
         </div>
 
-        {/* Step 4: Docker */}
+        {/* Step 4: Rate limiting */}
         <div>
           <div className="flex items-center gap-2 mb-3">
             <span className="w-5 h-5 rounded-full bg-accent/20 text-accent text-xs flex items-center justify-center font-semibold shrink-0">4</span>
+            <h3 className="text-sm font-semibold text-gray-200">Rate-limit peer connections</h3>
+          </div>
+          <CodeBlock code={rateLimitCmd} label="on your server" multiline />
+          <div className="mt-3 rounded-xl border border-accent/15 bg-accent/5 p-4">
+            <div className="flex items-start gap-3">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-accent shrink-0 mt-0.5">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+              <p className="text-xs text-gray-400 leading-relaxed">
+                These iptables rules cap each IP to 50 concurrent connections on port 2559 and limit new
+                connections to 100/second with a burst of 50. Existing peer sessions are unaffected.
+                The rules are saved to disk so they survive reboots.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Step 5: Docker */}
+        <div>
+          <div className="flex items-center gap-2 mb-3">
+            <span className="w-5 h-5 rounded-full bg-accent/20 text-accent text-xs flex items-center justify-center font-semibold shrink-0">5</span>
             <h3 className="text-sm font-semibold text-gray-200">Install Docker</h3>
           </div>
           <CodeBlock code={dockerCmd} label="on your server" multiline />
@@ -119,15 +164,15 @@ docker compose version`
           </p>
         </div>
 
-        {/* Step 5: Verify */}
+        {/* Step 6: Verify */}
         <div>
           <div className="flex items-center gap-2 mb-3">
-            <span className="w-5 h-5 rounded-full bg-accent/20 text-accent text-xs flex items-center justify-center font-semibold shrink-0">5</span>
+            <span className="w-5 h-5 rounded-full bg-accent/20 text-accent text-xs flex items-center justify-center font-semibold shrink-0">6</span>
             <h3 className="text-sm font-semibold text-gray-200">Verify installation</h3>
           </div>
           <CodeBlock code={verifyCmd} label="on your server" multiline />
           <p className="text-xs text-gray-500 mt-2">
-            You should see version output for both Docker and Docker Compose. If you get &quot;command not found&quot;, re-run step 4.
+            You should see version output for both Docker and Docker Compose. If you get &quot;command not found&quot;, re-run step 5.
           </p>
         </div>
 
