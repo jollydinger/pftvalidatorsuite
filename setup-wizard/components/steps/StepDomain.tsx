@@ -9,15 +9,15 @@ export function StepDomain({ config, setConfig, onNext, onBack }: StepProps) {
 
   const addDomainCmd = config.domain
     ? `# Add your domain to the validator config
-docker exec postfiatd bash -c "printf '\\n[server_domain]\\n${config.domain}\\n' >> /etc/postfiatd/postfiatd.cfg"
+docker exec postfiatd bash -c "printf '\\n[server_domain]\\n${config.domain}\\n\\npublic_ip = ${config.serverIp}\\n' >> /etc/postfiatd/postfiatd.cfg"
 
 # Verify it was written correctly
-docker exec postfiatd tail -3 /etc/postfiatd/postfiatd.cfg`
+docker exec postfiatd tail -5 /etc/postfiatd/postfiatd.cfg`
     : `# Add your domain to the validator config
-docker exec postfiatd bash -c "printf '\\n[server_domain]\\nyour-domain.com\\n' >> /etc/postfiatd/postfiatd.cfg"
+docker exec postfiatd bash -c "printf '\\n[server_domain]\\nyour-domain.com\\n\\npublic_ip = YOUR_SERVER_IP\\n' >> /etc/postfiatd/postfiatd.cfg"
 
 # Verify it was written correctly
-docker exec postfiatd tail -3 /etc/postfiatd/postfiatd.cfg`
+docker exec postfiatd tail -5 /etc/postfiatd/postfiatd.cfg`
 
   const attestationCmd = config.domain
     ? `# Generate your domain attestation
@@ -127,7 +127,7 @@ location /.well-known/ {
             <CodeBlock code={addDomainCmd} label={`${config.sshUser}@${config.serverIp}`} multiline />
             <p className="text-xs text-gray-500 mt-2">
               You should see the <code className="font-mono text-xs bg-[#08090f] px-1 rounded border border-[#1e1f35]">[server_domain]</code> section
-              followed by your domain at the end of the config file.
+              followed by your domain and <code className="font-mono text-xs bg-[#08090f] px-1 rounded border border-[#1e1f35]">public_ip</code> at the end of the config file.
             </p>
           </div>
 
@@ -170,8 +170,9 @@ location /.well-known/ {
               <span className="w-5 h-5 rounded-full bg-accent/20 text-accent text-xs flex items-center justify-center font-semibold shrink-0">4</span>
               <h3 className="text-sm font-semibold text-gray-200">Enable CORS headers (required)</h3>
             </div>
-            <CodeBlock code={nginxExample} label="nginx config example" multiline />
+            <CodeBlock code={nginxExample} label="nginx config on your web server (not the validator VPS)" multiline />
             <p className="text-xs text-gray-500 mt-2">
+              This goes on the <strong className="text-gray-300">web server hosting your domain</strong> (where you placed the TOML file) — not your validator VPS.
               The verification file must be publicly accessible with CORS headers. Validators and explorers query this to confirm your identity.
             </p>
           </div>

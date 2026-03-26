@@ -7,7 +7,7 @@ import { CodeBlock } from '@/components/CodeBlock'
 export function StepActivate({ config, onNext, onBack }: StepProps) {
   const [confirmed, setConfirmed] = useState(false)
 
-  const regenerateTokenCmd = `# Re-display your validator token (use the value you saved earlier, or run this again)
+  const regenerateTokenCmd = `# Generate a fresh validator token
 docker exec postfiatd validator-keys create_token --keyfile /root/.ripple/validator-keys.json`
 
   const enterContainerCmd = `docker exec -it postfiatd bash`
@@ -71,7 +71,9 @@ curl -s -X POST http://localhost:5005 \\
           </div>
           <CodeBlock code={regenerateTokenCmd} label={`${config.sshUser}@${config.serverIp}`} multiline />
           <p className="text-xs text-gray-500 mt-2">
-            The output is a long base64 string that may display with line breaks — that&apos;s just
+            Always generate a fresh token here — do not reuse the one from the Keys step.
+            {config.hasDomain ? ' Since you set up domain verification, the token must be regenerated so your domain is included in the manifest.' : ''}
+            {' '}The output is a long base64 string that may display with line breaks — that&apos;s just
             terminal wrapping. When you copy it for the next step, <strong className="text-gray-300">remove all line breaks</strong> so
             it is one continuous string.
           </p>

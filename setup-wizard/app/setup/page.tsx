@@ -61,8 +61,8 @@ export default function SetupPage() {
       case 2: return <StepDocker {...stepProps} />
       case 3: return <StepValidatorNode {...stepProps} />
       case 4: return <StepKeys {...stepProps} />
-      case 5: return <StepActivate {...stepProps} />
-      case 6: return <StepDomain {...stepProps} />
+      case 5: return <StepDomain {...stepProps} />
+      case 6: return <StepActivate {...stepProps} />
       case 7: return <StepSidecar {...stepProps} />
       case 8: return <StepComplete config={config} />
       default: return null
