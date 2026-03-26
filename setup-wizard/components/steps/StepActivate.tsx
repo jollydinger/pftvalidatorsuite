@@ -4,22 +4,21 @@ import { useState } from 'react'
 import { StepProps } from '@/lib/types'
 import { CodeBlock } from '@/components/CodeBlock'
 
-export function StepActivate({ config, onNext, onBack }: StepProps) {
+export function StepActivate({ config, setConfig, onNext, onBack }: StepProps) {
   const [confirmed, setConfirmed] = useState(false)
 
   const regenerateTokenCmd = `# Generate a fresh validator token
 docker exec postfiatd validator-keys create_token --keyfile /root/.ripple/validator-keys.json`
 
-  const enterContainerCmd = `docker exec -it postfiatd bash`
+  const token = config.validatorToken
+  const tokenPlaceholder = 'YOUR_TOKEN_HERE'
+  const tokenValue = token || tokenPlaceholder
 
-  const addTokenCmd = `# Replace TOKEN_VALUE with your token from step 1 (one continuous string, no line breaks)
-printf '\\n[validator_token]\\nTOKEN_VALUE\\n' >> /etc/postfiatd/postfiatd.cfg
+  const addTokenCmd = `# Remove any existing [validator_token] section, then append the new one
+docker exec postfiatd bash -c "sed -i '/^\\[validator_token\\]\$/,/^\$/d' /etc/postfiatd/postfiatd.cfg && printf '\\n[validator_token]\\n${tokenValue}\\n' >> /etc/postfiatd/postfiatd.cfg"
 
 # Verify it was written correctly
-tail -3 /etc/postfiatd/postfiatd.cfg
-
-# Exit the container shell
-exit`
+docker exec postfiatd tail -3 /etc/postfiatd/postfiatd.cfg`
 
   const restartCmd = `# Restart the validator to apply the new config
 docker restart postfiatd`
@@ -67,47 +66,77 @@ curl -s -X POST http://localhost:5005 \\
         <div>
           <div className="flex items-center gap-2 mb-3">
             <span className="w-5 h-5 rounded-full bg-accent/20 text-accent text-xs flex items-center justify-center font-semibold shrink-0">1</span>
-            <h3 className="text-sm font-semibold text-gray-200">Get your validator token value</h3>
+            <h3 className="text-sm font-semibold text-gray-200">Generate a fresh validator token</h3>
           </div>
           <CodeBlock code={regenerateTokenCmd} label={`${config.sshUser}@${config.serverIp}`} multiline />
           <p className="text-xs text-gray-500 mt-2">
             Always generate a fresh token here — do not reuse the one from the Keys step.
             {config.hasDomain ? ' Since you set up domain verification, the token must be regenerated so your domain is included in the manifest.' : ''}
-            {' '}The output is a long base64 string that may display with line breaks — that&apos;s just
-            terminal wrapping. When you copy it for the next step, <strong className="text-gray-300">remove all line breaks</strong> so
-            it is one continuous string.
           </p>
         </div>
 
-        {/* Step 2: Add token to config */}
+        {/* Step 2: Paste token */}
         <div>
           <div className="flex items-center gap-2 mb-3">
             <span className="w-5 h-5 rounded-full bg-accent/20 text-accent text-xs flex items-center justify-center font-semibold shrink-0">2</span>
-            <h3 className="text-sm font-semibold text-gray-200">Add the token to your validator config</h3>
+            <h3 className="text-sm font-semibold text-gray-200">Paste your token</h3>
           </div>
-
-          <p className="text-xs text-gray-500 mb-2">First, open a shell inside the container:</p>
-          <CodeBlock code={enterContainerCmd} label={`${config.sshUser}@${config.serverIp}`} />
-
-          <div className="my-3 flex items-center gap-2 px-3 py-2 rounded-lg bg-accent/5 border border-accent/20">
-            <div className="w-2 h-2 rounded-full bg-accent animate-pulse-slow shrink-0" />
-            <p className="text-xs text-accent-bright font-medium">
-              Your prompt will change — you are now <strong>inside the container</strong>. Run the commands below here.
+          <div className="rounded-xl border border-[#1e1f35] bg-[#0e0f1a] p-5">
+            <label className="block text-xs font-medium text-gray-400 mb-1.5">
+              Validator Token
+            </label>
+            <textarea
+              value={config.validatorToken}
+              onChange={(e) => {
+                // Strip all line breaks and extra whitespace — terminal output wraps long tokens
+                const cleaned = e.target.value.replace(/[\r\n]+/g, '').replace(/\s+/g, '')
+                setConfig({ validatorToken: cleaned })
+              }}
+              placeholder="Paste the token output here — line breaks will be removed automatically"
+              rows={3}
+              className="w-full px-3 py-2.5 rounded-lg font-mono text-sm bg-[#13141f] border border-[#1e1f35]
+                focus:border-accent/50 transition-colors text-gray-200 placeholder-gray-600 resize-none"
+            />
+            <p className="text-xs text-gray-600 mt-2">
+              Copy the token value from step 1 and paste it above. Line breaks are stripped automatically.
+              The command below will update to include your token.
             </p>
-          </div>
-
-          <CodeBlock code={addTokenCmd} label="inside postfiatd container" multiline />
-          <div className="mt-3 rounded-lg border border-amber-500/20 bg-amber-500/5 p-3">
-            <p className="text-xs text-amber-300/80 leading-relaxed">
-              <strong className="text-amber-300">Important:</strong> The token output from step 1 has line breaks — remove them all so it is one continuous string before pasting as <code className="font-mono bg-amber-500/10 px-1 rounded">TOKEN_VALUE</code>. Line breaks will break the command. Also keep the <code className="font-mono bg-amber-500/10 px-1 rounded">\n</code> that appears before <code className="font-mono bg-amber-500/10 px-1 rounded">TOKEN_VALUE</code> in the command — only remove line breaks from the token itself.
-            </p>
+            {token && (
+              <div className="mt-2 flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-green-400 shrink-0" />
+                <p className="text-xs text-green-400/80 font-medium">
+                  Token received ({token.length} characters) — command below is ready to copy
+                </p>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Step 3: Restart */}
+        {/* Step 3: Add token to config */}
         <div>
           <div className="flex items-center gap-2 mb-3">
             <span className="w-5 h-5 rounded-full bg-accent/20 text-accent text-xs flex items-center justify-center font-semibold shrink-0">3</span>
+            <h3 className="text-sm font-semibold text-gray-200">Add the token to your validator config</h3>
+          </div>
+          {!token && (
+            <div className="mb-3 rounded-lg border border-amber-500/20 bg-amber-500/5 p-3">
+              <p className="text-xs text-amber-300/80 leading-relaxed">
+                <strong className="text-amber-300">Tip:</strong> Paste your token in step 2 above and this command will be pre-filled — just copy and run it.
+                Or replace <code className="font-mono bg-amber-500/10 px-1 rounded">{tokenPlaceholder}</code> manually.
+              </p>
+            </div>
+          )}
+          <CodeBlock code={addTokenCmd} label={`${config.sshUser}@${config.serverIp}`} multiline />
+          <p className="text-xs text-gray-500 mt-2">
+            This runs entirely from the host — no need to enter the container. It removes any
+            existing token section first, so it&apos;s safe to re-run if you need to replace your token later.
+          </p>
+        </div>
+
+        {/* Step 4: Restart */}
+        <div>
+          <div className="flex items-center gap-2 mb-3">
+            <span className="w-5 h-5 rounded-full bg-accent/20 text-accent text-xs flex items-center justify-center font-semibold shrink-0">4</span>
             <h3 className="text-sm font-semibold text-gray-200">Restart your validator</h3>
           </div>
           <CodeBlock code={restartCmd} label={`${config.sshUser}@${config.serverIp}`} />
@@ -115,16 +144,22 @@ curl -s -X POST http://localhost:5005 \\
             <p className="text-xs text-amber-300/80 leading-relaxed">
               <strong className="text-amber-300">Important:</strong> Any time you restart <code className="font-mono bg-amber-500/10 px-1 rounded">postfiatd</code>, you must also restart the health-check sidecar — it loses its network connection when the main container restarts. Run this after any future restart:
             </p>
-            <div className="mt-2 font-mono text-xs text-gray-400 bg-[#08090f] rounded p-2 border border-[#1e1f35]">
-              docker stop pft-healthcheck && docker rm pft-healthcheck && docker run -d --name pft-healthcheck --network container:postfiatd -e NODE_RPC_URL=http://127.0.0.1:5005 -v ~/validator/sidecar/logs/healthcheck:/var/log/healthcheck --restart unless-stopped pft-healthcheck
+            <div className="mt-2">
+              <CodeBlock code={`docker stop pft-healthcheck && docker rm pft-healthcheck && \\
+docker run -d --name pft-healthcheck \\
+  --network container:postfiatd \\
+  -e NODE_RPC_URL=http://127.0.0.1:5005 \\
+  -v /opt/postfiatd/sidecar/logs/healthcheck:/var/log/healthcheck \\
+  --restart unless-stopped \\
+  pft-healthcheck`} label={`${config.sshUser}@${config.serverIp}`} multiline />
             </div>
           </div>
         </div>
 
-        {/* Step 4: Verify */}
+        {/* Step 5: Verify */}
         <div>
           <div className="flex items-center gap-2 mb-3">
-            <span className="w-5 h-5 rounded-full bg-accent/20 text-accent text-xs flex items-center justify-center font-semibold shrink-0">4</span>
+            <span className="w-5 h-5 rounded-full bg-accent/20 text-accent text-xs flex items-center justify-center font-semibold shrink-0">5</span>
             <h3 className="text-sm font-semibold text-gray-200">Verify the token loaded</h3>
           </div>
           <CodeBlock code={verifyCmd} label={`${config.sshUser}@${config.serverIp}`} multiline />

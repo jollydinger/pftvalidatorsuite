@@ -3,6 +3,7 @@ export interface WizardConfig {
   sshUser: string
   network: 'testnet' | 'devnet'
   validatorPubKey: string
+  validatorToken: string
   hasDomain: boolean
   domain: string
   hasWebhook: boolean
@@ -15,6 +16,7 @@ export const defaultConfig: WizardConfig = {
   sshUser: 'root',
   network: 'testnet',
   validatorPubKey: '',
+  validatorToken: '',
   hasDomain: false,
   domain: '',
   hasWebhook: false,
@@ -41,7 +43,7 @@ export interface Step {
 export const STEPS: Step[] = [
   { id: 'welcome', title: 'Welcome', shortTitle: 'Welcome' },
   { id: 'server', title: 'Server Provisioning', shortTitle: 'Server' },
-  { id: 'docker', title: 'Install Docker', shortTitle: 'Docker' },
+  { id: 'docker', title: 'Prepare Your Server', shortTitle: 'Server Prep' },
   { id: 'node', title: 'Validator Node Setup', shortTitle: 'Node' },
   { id: 'keys', title: 'Key Generation', shortTitle: 'Keys' },
   { id: 'domain', title: 'Domain Verification', shortTitle: 'Domain', optional: true },

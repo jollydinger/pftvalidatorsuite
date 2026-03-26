@@ -9,7 +9,10 @@ export function StepKeys({ config, setConfig, onNext, onBack }: StepProps) {
   const [backedUp, setBackedUp] = useState(false)
   const [tokenSaved, setTokenSaved] = useState(false)
 
-  const generateKeyCmd = `# Create the config directory and generate your validator keys
+  const generateKeyCmd = `# Check if keys already exist — if this prints JSON, you already have keys and should SKIP the next command
+docker exec postfiatd cat /root/.ripple/validator-keys.json 2>/dev/null
+
+# Create the config directory and generate your validator keys (only run if no keys exist!)
 docker exec postfiatd mkdir -p /root/.ripple
 docker exec postfiatd validator-keys create_keys --keyfile /root/.ripple/validator-keys.json`
 
@@ -63,9 +66,11 @@ docker exec postfiatd validator-keys create_token --keyfile /root/.ripple/valida
             <h3 className="text-sm font-semibold text-gray-200">Generate your validator keys</h3>
           </div>
           <CodeBlock code={generateKeyCmd} label={`${config.sshUser}@${config.serverIp}`} multiline />
-          <p className="text-xs text-gray-500 mt-2">
-            This creates a new ed25519 keypair and writes it to the validator config volume. Only run this once — running it again will overwrite your existing keys.
-          </p>
+          <div className="mt-2 rounded-lg border border-amber-500/20 bg-amber-500/5 p-3">
+            <p className="text-xs text-amber-300/80 leading-relaxed">
+              <strong className="text-amber-300">Warning:</strong> The first command checks for existing keys. If it prints JSON, you already have keys — <strong className="text-amber-300">skip the second command</strong>. Running <code className="font-mono bg-amber-500/10 px-1 rounded">create_keys</code> again will silently overwrite your existing keys and permanently destroy your validator identity.
+            </p>
+          </div>
         </div>
 
         {/* Step 2: View key file */}

@@ -13,7 +13,7 @@ function buildRunCommand(config: { serverIp: string; sshUser: string; webhookUrl
           `  -e WEBHOOK_TYPE="${config.webhookType}" \\`,
         ]
       : []),
-    `  -v ~/validator/sidecar/logs/healthcheck:/var/log/healthcheck \\`,
+    `  -v /opt/postfiatd/sidecar/logs/healthcheck:/var/log/healthcheck \\`,
   ]
 
   return `docker run -d \\
@@ -28,13 +28,13 @@ export function StepSidecar({ config, setConfig, onNext, onBack }: StepProps) {
   const [webhookError, setWebhookError] = useState('')
 
   const cloneCmd = `# Navigate to your validator directory
-cd ~/validator
+cd /opt/postfiatd
 
 # Clone the PFT Validator Suite (includes healthcheck sidecar)
 git clone https://github.com/jollydinger/pftvalidatorsuite.git sidecar
 
 # Create the log directory the sidecar will write to
-mkdir -p ~/validator/sidecar/logs/healthcheck
+mkdir -p /opt/postfiatd/sidecar/logs/healthcheck
 
 # Build the health-check Docker image
 docker build -t pft-healthcheck ./sidecar/healthcheck`
@@ -104,7 +104,7 @@ docker stop pft-healthcheck && docker rm pft-healthcheck
             <span className="w-5 h-5 rounded-full bg-accent/20 text-accent text-xs flex items-center justify-center font-semibold shrink-0">1</span>
             <h3 className="text-sm font-semibold text-gray-200">Download and build the sidecar</h3>
           </div>
-          <CodeBlock code={cloneCmd} label={`${config.sshUser}@${config.serverIp} ~/validator`} multiline />
+          <CodeBlock code={cloneCmd} label={`${config.sshUser}@${config.serverIp} /opt/postfiatd`} multiline />
           <p className="text-xs text-gray-500 mt-2">
             This clones the PFT Validator Suite and builds a lightweight Alpine-based Docker image.
           </p>
@@ -206,7 +206,7 @@ docker stop pft-healthcheck && docker rm pft-healthcheck
             <span className="w-5 h-5 rounded-full bg-accent/20 text-accent text-xs flex items-center justify-center font-semibold shrink-0">2</span>
             <h3 className="text-sm font-semibold text-gray-200">Start the health monitor</h3>
           </div>
-          <CodeBlock code={runCmd} label={`${config.sshUser}@${config.serverIp} ~/validator`} multiline />
+          <CodeBlock code={runCmd} label={`${config.sshUser}@${config.serverIp} /opt/postfiatd`} multiline />
           <p className="text-xs text-gray-500 mt-2">
             The sidecar uses <code className="font-mono text-xs bg-[#08090f] px-1 rounded border border-[#1e1f35]">--network container:postfiatd</code> to
             reach the admin RPC on <code className="font-mono text-xs bg-[#08090f] px-1 rounded border border-[#1e1f35]">127.0.0.1:5005</code> without exposing any ports.

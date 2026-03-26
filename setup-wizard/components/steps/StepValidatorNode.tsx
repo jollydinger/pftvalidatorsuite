@@ -7,17 +7,19 @@ import { CodeBlock } from '@/components/CodeBlock'
 export function StepValidatorNode({ config, onNext, onBack }: StepProps) {
   const [confirmed, setConfirmed] = useState(false)
 
-  const mkdirCmd = `mkdir -p ~/validator && cd ~/validator`
+  const mkdirCmd = `mkdir -p /opt/postfiatd && cd /opt/postfiatd`
 
-  const downloadCmd = `# Download the official PFT validator compose file
+  const downloadCmd = `cd /opt/postfiatd && \\
+# Download the official PFT external validator compose file
 curl -fsSL \\
-  https://raw.githubusercontent.com/postfiatorg/postfiatd/main/scripts/docker-compose-validator.yml \\
-  -o docker-compose-validator.yml
+  https://raw.githubusercontent.com/postfiatorg/postfiatd/main/scripts/docker-compose-external-validator.yml \\
+  -o docker-compose.yml
 
 # Confirm it downloaded
-cat docker-compose-validator.yml | head -20`
+cat docker-compose.yml | head -20`
 
-  const envCmd = `# Create your environment config
+  const envCmd = `cd /opt/postfiatd && \\
+# Create your environment config
 cat > .env << 'EOF'
 NETWORK=${config.network}
 EOF
@@ -25,35 +27,16 @@ EOF
 # Verify
 cat .env`
 
-  const pullCmd = `# Pull the validator Docker image (may take a few minutes)
-docker compose -f docker-compose-validator.yml --env-file .env pull
+  const pullCmd = `cd /opt/postfiatd && \\
+# Pull the validator Docker image (may take a few minutes)
+docker compose --env-file .env pull
 
 # Confirm image is available
 docker images | grep postfiatd`
 
-  const promtailConfigCmd = `cat > promtail-config.yml << 'EOF'
-server:
-  http_listen_port: 9080
-  grpc_listen_port: 0
-
-positions:
-  filename: /tmp/positions.yaml
-
-clients:
-  - url: http://loki:3100/loki/api/v1/push
-
-scrape_configs:
-  - job_name: postfiatd
-    static_configs:
-      - targets:
-          - localhost
-        labels:
-          job: postfiatd
-          __path__: /var/log/postfiatd/*.log
-EOF`
-
-  const startCmd = `# Start the validator node
-docker compose -f docker-compose-validator.yml --env-file .env up -d`
+  const startCmd = `cd /opt/postfiatd && \\
+# Start the validator node
+docker compose --env-file .env up -d`
 
   const logsCmd = `# Watch startup logs
 docker logs -f postfiatd 2>&1`
@@ -100,7 +83,7 @@ curl -s -X POST http://localhost:5005 \\
             <span className="w-5 h-5 rounded-full bg-accent/20 text-accent text-xs flex items-center justify-center font-semibold shrink-0">2</span>
             <h3 className="text-sm font-semibold text-gray-200">Download the official compose file</h3>
           </div>
-          <CodeBlock code={downloadCmd} label={`${config.sshUser}@${config.serverIp} ~/validator`} multiline />
+          <CodeBlock code={downloadCmd} label={`${config.sshUser}@${config.serverIp} /opt/postfiatd`} multiline />
           <p className="text-xs text-gray-500 mt-2">
             This is the official validator configuration from the Post Fiat GitHub repository.
           </p>
@@ -112,7 +95,7 @@ curl -s -X POST http://localhost:5005 \\
             <span className="w-5 h-5 rounded-full bg-accent/20 text-accent text-xs flex items-center justify-center font-semibold shrink-0">3</span>
             <h3 className="text-sm font-semibold text-gray-200">Create environment file</h3>
           </div>
-          <CodeBlock code={envCmd} label={`${config.sshUser}@${config.serverIp} ~/validator`} multiline />
+          <CodeBlock code={envCmd} label={`${config.sshUser}@${config.serverIp} /opt/postfiatd`} multiline />
         </div>
 
         {/* Step 4 */}
@@ -121,7 +104,7 @@ curl -s -X POST http://localhost:5005 \\
             <span className="w-5 h-5 rounded-full bg-accent/20 text-accent text-xs flex items-center justify-center font-semibold shrink-0">4</span>
             <h3 className="text-sm font-semibold text-gray-200">Pull the validator image</h3>
           </div>
-          <CodeBlock code={pullCmd} label={`${config.sshUser}@${config.serverIp} ~/validator`} multiline />
+          <CodeBlock code={pullCmd} label={`${config.sshUser}@${config.serverIp} /opt/postfiatd`} multiline />
           <p className="text-xs text-gray-500 mt-2">
             The image is ~500MB. This step requires a good internet connection and may take a few minutes.
           </p>
@@ -131,30 +114,18 @@ curl -s -X POST http://localhost:5005 \\
         <div>
           <div className="flex items-center gap-2 mb-3">
             <span className="w-5 h-5 rounded-full bg-accent/20 text-accent text-xs flex items-center justify-center font-semibold shrink-0">5</span>
-            <h3 className="text-sm font-semibold text-gray-200">Create Promtail config</h3>
+            <h3 className="text-sm font-semibold text-gray-200">Start your node</h3>
           </div>
-          <CodeBlock code={promtailConfigCmd} label={`${config.sshUser}@${config.serverIp} ~/validator`} multiline />
-          <p className="text-xs text-gray-500 mt-2">
-            The compose file requires this config to exist before starting — without it, Docker creates a directory here and promtail fails to launch.
-          </p>
+          <CodeBlock code={startCmd} label={`${config.sshUser}@${config.serverIp} /opt/postfiatd`} multiline />
         </div>
 
         {/* Step 6 */}
         <div>
           <div className="flex items-center gap-2 mb-3">
             <span className="w-5 h-5 rounded-full bg-accent/20 text-accent text-xs flex items-center justify-center font-semibold shrink-0">6</span>
-            <h3 className="text-sm font-semibold text-gray-200">Start your node</h3>
-          </div>
-          <CodeBlock code={startCmd} label={`${config.sshUser}@${config.serverIp} ~/validator`} multiline />
-        </div>
-
-        {/* Step 7 */}
-        <div>
-          <div className="flex items-center gap-2 mb-3">
-            <span className="w-5 h-5 rounded-full bg-accent/20 text-accent text-xs flex items-center justify-center font-semibold shrink-0">7</span>
             <h3 className="text-sm font-semibold text-gray-200">Watch startup logs</h3>
           </div>
-          <CodeBlock code={logsCmd} label={`${config.sshUser}@${config.serverIp} ~/validator`} multiline />
+          <CodeBlock code={logsCmd} label={`${config.sshUser}@${config.serverIp} /opt/postfiatd`} multiline />
           <p className="text-xs text-gray-500 mt-2">
             Wait until you see <code className="font-mono text-xs bg-[#08090f] px-1 rounded border border-[#1e1f35]">STATE-&gt;connected</code> or peer connection lines in the output — this takes 30–60 seconds. The node will continue syncing in the background after you press Ctrl+C. Reaching <code className="font-mono text-xs bg-[#08090f] px-1 rounded border border-[#1e1f35]">full</code> state on first boot typically takes 5–10 minutes.
           </p>
@@ -183,13 +154,13 @@ curl -s -X POST http://localhost:5005 \\
           </div>
         </div>
 
-        {/* Step 8 */}
+        {/* Step 7 */}
         <div>
           <div className="flex items-center gap-2 mb-3">
-            <span className="w-5 h-5 rounded-full bg-accent/20 text-accent text-xs flex items-center justify-center font-semibold shrink-0">8</span>
+            <span className="w-5 h-5 rounded-full bg-accent/20 text-accent text-xs flex items-center justify-center font-semibold shrink-0">7</span>
             <h3 className="text-sm font-semibold text-gray-200">Verify it&apos;s running</h3>
           </div>
-          <CodeBlock code={checkCmd} label={`${config.sshUser}@${config.serverIp} ~/validator`} multiline />
+          <CodeBlock code={checkCmd} label={`${config.sshUser}@${config.serverIp} /opt/postfiatd`} multiline />
         </div>
 
         {/* What to expect */}

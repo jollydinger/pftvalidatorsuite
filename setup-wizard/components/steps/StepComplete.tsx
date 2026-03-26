@@ -26,13 +26,13 @@ docker stop pft-healthcheck && docker rm pft-healthcheck && docker run -d \\
   --name pft-healthcheck \\
   --network container:postfiatd \\
   -e NODE_RPC_URL=http://127.0.0.1:5005 \\
-  -v ~/validator/sidecar/logs/healthcheck:/var/log/healthcheck \\
+  -v /opt/postfiatd/sidecar/logs/healthcheck:/var/log/healthcheck \\
   --restart unless-stopped \\
   pft-healthcheck`
 
-  const scoreUrl = config.validatorPubKey
-    ? `https://postfiat-onboarding-api.fly.dev/validators/${config.validatorPubKey}`
-    : 'https://postfiat-onboarding-api.fly.dev/validators/<YOUR_PUBLIC_KEY>'
+  const explorerBase = config.network === 'testnet'
+    ? 'https://explorer.testnet.postfiat.org'
+    : 'https://explorer.devnet.postfiat.org'
 
   const tweetText = encodeURIComponent(
     `Just set up my Post Fiat validator! Running on the PFT network with 24/7 health monitoring. #PostFiat #PFT #Validator`
@@ -66,12 +66,12 @@ docker stop pft-healthcheck && docker rm pft-healthcheck && docker run -d \\
             Your validator should appear on the network explorer shortly. It may take a couple of minutes to show up after first starting.
           </p>
           <a
-            href="https://explorer.testnet.postfiat.org/network/validators"
+            href={`${explorerBase}/network/validators`}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 text-xs text-accent hover:text-accent-bright transition-colors"
           >
-            explorer.testnet.postfiat.org/network/validators
+            {explorerBase.replace('https://', '')}/network/validators
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
               <polyline points="15 3 21 3 21 9" />
@@ -148,9 +148,21 @@ docker stop pft-healthcheck && docker rm pft-healthcheck && docker run -d \\
             Track Your Agreement Score
           </h3>
           <p className="text-xs text-gray-400 mb-3">
-            Once your node has been validating, check your 1h / 24h / 30d agreement scores:
+            Once your node has been validating, check your 1h / 24h / 30d agreement scores on the network explorer:
           </p>
-          <CodeBlock code={`curl -s ${scoreUrl} | python3 -m json.tool`} label="agreement score API" />
+          <a
+            href={`${explorerBase}/network/validators`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 text-xs text-accent hover:text-accent-bright transition-colors"
+          >
+            {explorerBase.replace('https://', '')}/network/validators
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+              <polyline points="15 3 21 3 21 9" />
+              <line x1="10" y1="14" x2="21" y2="3" />
+            </svg>
+          </a>
         </div>
       )}
 
